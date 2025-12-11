@@ -204,7 +204,7 @@ function normalizeTeamName(v) {
 }
 
 // LOAD CSV DATA
-Papa.parse("https://nijannfbd7890.github.io/Team_Report_Dashboard/workbook.csv", {
+Papa.parse("https://nijannfbd7890.github.io/WRM/workbook.csv", {
   download: true, header: true,
   complete: res => initDashboard(res.data)
 });
