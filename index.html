@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WRM Report Analysis Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<style>
+body {
+  background: linear-gradient(135deg, #015871, #01414d);
+  font-family: "Segoe UI", sans-serif;
+  color: white;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+/* HEADER */
+header {
+  width: 100%;
+  background: linear-gradient(90deg, #003d52, #026b8a);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 50px;
+}
+.logo-left, .logo-right {
+  height: 85px;
+  width: 85px;
+  border-radius: 50%;
+  background-color: white;
+  object-fit: cover;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  border: 3px solid #fff;
+}
+.header-title {
+  flex: 1;
+  text-align: center;
+  color: white;
+}
+.header-title h1 {
+  font-size: 1.8rem;
+  line-height: 1.5;
+  margin: 0;
+  font-weight: bold;
+}
+.header-title span {
+  font-size: 1.2rem;
+  color: #ffde59;
+  font-weight: 600;
+}
+
+/* NAVIGATION */
+nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  background: rgba(255,255,255,0.1);
+  padding: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  background: #026b8a;
+  padding: 8px 15px;
+  border-radius: 6px;
+  transition: 0.3s;
+}
+nav a:hover, nav a.active {
+  background: #ffb347;
+  color: #003d52;
+}
+
+/* DASHBOARD CARDS */
+.cards {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin: 25px;
+}
+.card {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 20px;
+  min-width: 200px;
+  width: 220px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  transition: transform 0.3s;
+}
+.card:hover {
+  transform: scale(1.05);
+}
+.card h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: #ffde59;
+}
+.card p {
+  margin: 5px 0 0;
+  font-size: 1rem;
+}
+
+/* CHART CONTAINER */
+#chartContainer {
+  width: 90%;
+  max-width: 1000px;
+  margin: 25px auto;
+  height: 400px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 0 10px rgba(255,255,255,0.2);
+}
+canvas { width: 100% !important; height: 100% !important; }
+
+footer {
+  text-align: center;
+  color: #bbb;
+  padding: 15px;
+  font-size: 0.9rem;
+}
+</style>
+</head>
+
+<body>
+<header>
+  <div class="header-container">
+    <img src="LOGO.png" alt="Company Logo" class="logo-left" />
+    <div class="header-title">
+      <h1>
+        Namma Family Builder and Developer Pvt. Ltd<br>
+        WRM Report Analysis Dashboard<br>
+        <span>Team - Marketing Management</span>
+      </h1>
+    </div>
+    <img src="cs.jpg" alt="Boss Photo" class="logo-right" />
+  </div>
+</header>
+
+<!-- NAVIGATION -->
+<nav>
+  <a href="index.html" class="active">🏠 Dashboard</a>
+  <a href="advance-range.html">📊 Advance Range</a>
+  <a href="budget-range.html">💰 Budget Range</a>
+  <a href="sqft-range.html">📐 Sqft Range</a>
+  <a href="negotiable-range.html">🤝 Negotiable Range</a>
+  <a href="location-report.html">📍 Location</a>
+</nav>
+
+<!-- FILTERS -->
+<div class="filters">
+  <select id="yearFilter"><option value="All">All Years</option></select>
+  <select id="monthFilter"><option value="All">All Months</option></select>
+</div>
+
+<!-- DASHBOARD CARDS -->
+<div class="cards">
+  <div class="card"><h2 id="totalBookings">0</h2><p>Total Bookings</p></div>
+  <div class="card"><h2 id="totalSqft">0</h2><p>Total Sq Ft</p></div>
+  <div class="card"><h2 id="selectedYear">All</h2><p>Selected Year</p></div>
+  <div class="card"><h2 id="selectedMonth">All</h2><p>Selected Month</p></div>
+</div>
+
+<!-- CHART OVERVIEW -->
+<div id="chartContainer">
+  <canvas id="overviewChart"></canvas>
+</div>
+
+<footer>
+  © 2025 Namma Family Builder & Developer Pvt. Ltd — All Rights Reserved
+</footer>
+
+<script>
+let allData = [], monthsByYear = {}, chartInstance = null;
+
+// TEAM NAME NORMALIZATION (same logic used in all other pages)
+const TEAM_CANONICAL = {
+  "suriya sir & selvakumar sir": "Suriya Sir & Selvakumar Sir",
+  "suriya sir": "Suriya Sir & Selvakumar Sir",
+  "selvakumar sir": "Suriya Sir & Selvakumar Sir",
+  "latha mam & ayyappan sir": "Latha Mam & Ayyappan Sir",
+  "latha mam": "Latha Mam & Ayyappan Sir",
+  "ayyappan sir": "Latha Mam & Ayyappan Sir"
+};
+function titleCase(str) {
+  if (!str) return "";
+  return str.toLowerCase().replace(/\s*&\s*/g, " & ")
+  .split(" ").filter(Boolean)
+  .map(w => w[0].toUpperCase() + w.slice(1)).join(" ").trim();
+}
+function normalizeTeamName(v) {
+  let key = (v || "").toLowerCase().replace(/\s*&\s*/g, " & ").replace(/\s+/g, " ").trim();
+  return TEAM_CANONICAL[key] || titleCase(key);
+}
+
+// LOAD CSV DATA
+Papa.parse("https://nijannfbd7890.github.io/Team_Report_Dashboard/workbook.csv", {
+  download: true, header: true,
+  complete: res => initDashboard(res.data)
+});
+
+function initDashboard(data) {
+  const norm = s => s ? s.trim().toLowerCase() : "";
+  const f = data[0];
+  const teamKey = Object.keys(f).find(k => norm(k) === "team name");
+  const sqftKeys = Object.keys(f).filter(k => norm(k).startsWith("actual total sq-ft"));
+  const dateKey = Object.keys(f).find(k => norm(k).includes("booking"));
+  if (!teamKey || !sqftKeys.length || !dateKey) {
+    alert("⚠ Missing required columns in CSV");
+    return;
+  }
+  allData = data.filter(d => d[teamKey]);
+  populateFilters(allData, dateKey);
+  updateDashboard("All", "All", teamKey, sqftKeys, dateKey);
+
+  yearFilter.addEventListener("change", e => {
+    updateMonthDropdown(e.target.value);
+    updateDashboard(e.target.value, monthFilter.value, teamKey, sqftKeys, dateKey);
+  });
+  monthFilter.addEventListener("change", e => {
+    updateDashboard(yearFilter.value, e.target.value, teamKey, sqftKeys, dateKey);
+  });
+}
+
+function populateFilters(data, dateKey) {
+  const years = [];
+  monthsByYear = {};
+  data.forEach(r => {
+    const raw = (r[dateKey] || "").trim();
+    if (!raw) return;
+    const [d, m, y] = raw.split(/[-\/]/);
+    if (!y) return;
+    const year = parseInt(y);
+    const mon = new Date(`${y}-${m}-01`).toLocaleString('en', { month: 'short' }) + "-" + y.slice(-2);
+    if (!years.includes(year)) years.push(year);
+    if (!monthsByYear[year]) monthsByYear[year] = [];
+    if (!monthsByYear[year].includes(mon)) monthsByYear[year].push(mon);
+  });
+  years.sort((a,b)=>b-a);
+  const yearSel = document.getElementById("yearFilter");
+  yearSel.innerHTML = '<option value="All">All Years</option>';
+  years.forEach(y => yearSel.innerHTML += `<option>${y}</option>`);
+  updateMonthDropdown("All");
+}
+
+function updateMonthDropdown(selectedYear) {
+  const monthSel = document.getElementById("monthFilter");
+  monthSel.innerHTML = '<option value="All">All Months</option>';
+  if (selectedYear !== "All") {
+    (monthsByYear[selectedYear] || []).forEach(m => monthSel.innerHTML += `<option>${m}</option>`);
+  } else {
+    const allMonths = [...new Set(Object.values(monthsByYear).flat())];
+    allMonths.forEach(m => monthSel.innerHTML += `<option>${m}</option>`);
+  }
+}
+
+function updateDashboard(year, month, teamKey, sqftKeys, dateKey) {
+  let filtered = allData.filter(r => r[dateKey]);
+  if (year !== "All" || month !== "All") {
+    filtered = filtered.filter(r => {
+      const raw = (r[dateKey] || "").trim();
+      const [d, m, y] = raw.split(/[-\/]/);
+      if (!y) return false;
+      const rowYear = parseInt(y);
+      const rowMonth = new Date(`${y}-${m}-01`).toLocaleString('en', { month: 'short' }) + "-" + y.slice(-2);
+      if (year !== "All" && rowYear != year) return false;
+      if (month !== "All" && rowMonth.toLowerCase() != month.toLowerCase()) return false;
+      return true;
+    });
+  }
+
+  const teams = {};
+  filtered.forEach(r => {
+    const team = normalizeTeamName(r[teamKey]);
+    let sqft = 0;
+    sqftKeys.forEach(k => {
+      const v = parseFloat((r[k] || "0").replace(/,/g, "")) || 0;
+      sqft += v;
+    });
+    if (!teams[team]) teams[team] = { count: 0, sqft: 0 };
+    teams[team].count++;
+    teams[team].sqft += sqft;
+  });
+
+  const sorted = Object.entries(teams).sort((a,b)=>b[1].count-a[1].count);
+  const totalCount = sorted.reduce((a,[,v])=>a+v.count,0);
+  const totalSqft = sorted.reduce((a,[,v])=>a+v.sqft,0);
+
+  document.getElementById("totalBookings").textContent = totalCount;
+  document.getElementById("totalSqft").textContent = Math.round(totalSqft);
+  document.getElementById("selectedYear").textContent = year;
+  document.getElementById("selectedMonth").textContent = month;
+
+  renderChart(sorted);
+}
+
+function renderChart(dataArr) {
+  const ctx = document.getElementById("overviewChart").getContext("2d");
+  if (chartInstance) chartInstance.destroy();
+  if (!dataArr.length) return;
+  const labels = dataArr.map(([t]) => t);
+  const counts = dataArr.map(([_,v]) => v.count);
+  chartInstance = new Chart(ctx,{
+    type:"bar",
+    plugins:[ChartDataLabels],
+    data:{labels,datasets:[{label:"Total Bookings",data:counts,
+      backgroundColor:(ctx)=>{
+        const c=ctx.chart.ctx,area=ctx.chart.chartArea;
+        if(!area)return"#00cc99";
+        const g=c.createLinearGradient(0,area.bottom,0,area.top);
+        g.addColorStop(0,"#ff9933");
+        g.addColorStop(1,"#009933");
+        return g;
+      },
+      borderColor:"rgba(255,255,255,0.8)",borderWidth:1}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        datalabels:{color:"white",anchor:"end",align:"start",font:{weight:"bold"},formatter:v=>v},
+        title:{display:true,text:"Total Bookings per Team (Overview)",color:"white"}
+      },
+      scales:{x:{ticks:{color:"white",autoSkip:false,maxRotation:45,minRotation:45}},
+              y:{ticks:{color:"white"},beginAtZero:true}}
+    }
+  });
+}
+</script>
+</body>
+</html>
