@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Negotiable Range Report | WRM Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<style>
+body {
+  background: linear-gradient(135deg, #015871, #01414d);
+  font-family: "Segoe UI", sans-serif;
+  color: white;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+header {
+  background: linear-gradient(90deg, #003d52, #026b8a);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  padding: 12px;
+}
+header img {
+  position: absolute;
+  left: 25px;
+  background-color: white;
+  border-radius: 10px;
+  padding: 6px;
+  height: 80px;
+  width: auto;
+}
+h1 {
+  font-size: 1.6rem;
+  line-height: 1.4;
+  margin: 0;
+}
+nav {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  background: rgba(255,255,255,0.1);
+  padding: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  background: #026b8a;
+  padding: 8px 15px;
+  border-radius: 6px;
+  transition: 0.3s;
+}
+nav a:hover, nav a.active {
+  background: #ffb347;
+  color: #003d52;
+}
+.filters { margin: 15px; }
+select {
+  padding: 8px; margin: 0 8px;
+  border-radius: 5px; font-size: 1rem;
+}
+table {
+  width: 95%; margin: 15px auto;
+  border-collapse: collapse;
+  font-size: 0.9rem; text-align: center;
+}
+th, td {
+  padding: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+th { background-color: rgba(255,255,255,0.2); }
+tfoot tr {
+  background-color: rgba(255,255,255,0.3);
+  font-weight: bold;
+}
+#chartContainer {
+  width: 90%; max-width: 1000px;
+  margin: 25px auto; height: 400px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px; padding: 15px;
+  box-shadow: 0 0 8px rgba(255,255,255,0.2);
+}
+canvas { width: 100% !important; height: 100% !important; }
+</style>
+</head>
+
+<body>
+<header>
+  <img src="LOGO.png" alt="Company Logo" />
+  <!-- <img src="cs.jpg" alt="cs image" /> -->
+  <h1>
+    Namma Family Builder and Developer Pvt. Ltd<br>
+    WRM Report Analysis Dashboard<br>
+    Negotiable Range Report
+  </h1>
+</header>
+
+<nav>
+  <a href="index.html">🏠 Dashboard</a>
+  <a href="advance-range.html">📊 Advance Range</a>
+  <a href="budget-range.html">💰 Budget Range</a>
+  <a href="sqft-range.html">📐 Sqft Range</a>
+  <a href="negotiable-range.html" class="active">🤝 Negotiable Range</a>
+  <a href="location-report.html">📍 Location</a>
+</nav>
+
+<div class="filters">
+  <select id="yearFilter"><option value="All">All Years</option></select>
+  <select id="monthFilter"><option value="All">All Months</option></select>
+</div>
+
+<h2>TEAM WISE PRICE NEGOTIABLE RANGE REPORT</h2>
+
+<table id="dataTable">
+  <thead>
+    <tr>
+      <th rowspan="2">Team Name</th>
+      <th colspan="2">Overall</th>
+      <th colspan="3">0 - 100</th>
+      <th colspan="3">100 - 150</th>
+      <th colspan="3">150 - 200</th>
+      <th colspan="3">200 - 250</th>
+      <th colspan="3">250 - 300</th>
+      <th colspan="3">Above 300</th>
+    </tr>
+    <tr>
+      <th>Count</th><th>Sq Ft</th>
+      <th>Count</th><th>Sq Ft</th><th>%</th>
+      <th>Count</th><th>Sq Ft</th><th>%</th>
+      <th>Count</th><th>Sq Ft</th><th>%</th>
+      <th>Count</th><th>Sq Ft</th><th>%</th>
+      <th>Count</th><th>Sq Ft</th><th>%</th>
+      <th>Count</th><th>Sq Ft</th><th>%</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+  <tfoot></tfoot>
+</table>
+
+<div id="chartContainer">
+  <canvas id="bookingsChart"></canvas>
+</div>
+
+<script>
+let allData = [], monthsByYear = {}, chartInstance = null;
+
+// ✅ Shared Name Normalizer (same as other pages)
+const TEAM_CANONICAL = {
+  "suriya sir & selvakumar sir": "Suriya Sir & Selvakumar Sir",
+  "suriya sir": "Suriya Sir & Selvakumar Sir",
+  "selvakumar sir": "Suriya Sir & Selvakumar Sir",
+  "latha mam & ayyappan sir": "Latha Mam & Ayyappan Sir",
+  "latha mam": "Latha Mam & Ayyappan Sir",
+  "ayyappan sir": "Latha Mam & Ayyappan Sir"
+};
+function titleCase(str){
+  return str ? str.toLowerCase().replace(/\s*&\s*/g," & ")
+  .split(" ").filter(Boolean)
+  .map(w=>w[0].toUpperCase()+w.slice(1)).join(" ").trim() : "";
+}
+function normalizeTeamName(val){
+  let k=(val||"").trim().toLowerCase().replace(/\s*&\s*/g," & ").replace(/\s+/g," ");
+  return TEAM_CANONICAL[k] || titleCase(k);
+}
+
+// ✅ Load CSV
+Papa.parse("https://nijannfbd7890.github.io/Team_Report_Dashboard/workbook.csv", {
+  download: true, header: true,
+  complete: res => initDashboard(res.data)
+});
+
+function initDashboard(data){
+  const norm=s=>s?s.trim().toLowerCase():"";
+  const f=data[0];
+  const teamKey=Object.keys(f).find(k=>norm(k)==="team name");
+  const negoKey=Object.keys(f).find(k=>norm(k).includes("negotiable range"));
+  const sqftKeys=Object.keys(f).filter(k=>norm(k).startsWith("actual total sq-ft"));
+  const dateKey=Object.keys(f).find(k=>norm(k).includes("booking"));
+  if(!teamKey||!negoKey||!sqftKeys.length||!dateKey){
+    alert("⚠ Missing required columns in CSV");
+    return;
+  }
+  allData=data.filter(d=>d[teamKey]);
+  populateFilters(allData,dateKey);
+  updateDashboard("All","All",teamKey,negoKey,sqftKeys,dateKey);
+  yearFilter.addEventListener("change",e=>{
+    updateMonthDropdown(e.target.value);
+    updateDashboard(e.target.value,monthFilter.value,teamKey,negoKey,sqftKeys,dateKey);
+  });
+  monthFilter.addEventListener("change",e=>{
+    updateDashboard(yearFilter.value,e.target.value,teamKey,negoKey,sqftKeys,dateKey);
+  });
+}
+
+function populateFilters(data,dateKey){
+  const years=[]; monthsByYear={};
+  data.forEach(r=>{
+    const raw=(r[dateKey]||"").trim(); if(!raw)return;
+    const [d,m,y]=raw.split(/[-\/]/); if(!y)return;
+    const year=parseInt(y);
+    const mon=new Date(`${y}-${m}-01`).toLocaleString('en',{month:'short'})+"-"+y.slice(-2);
+    if(!years.includes(year))years.push(year);
+    if(!monthsByYear[year])monthsByYear[year]=[];
+    if(!monthsByYear[year].includes(mon))monthsByYear[year].push(mon);
+  });
+  years.sort((a,b)=>b-a);
+  const ys=document.getElementById("yearFilter");
+  ys.innerHTML='<option value="All">All Years</option>';
+  years.forEach(y=>ys.innerHTML+=`<option>${y}</option>`);
+  updateMonthDropdown("All");
+}
+function updateMonthDropdown(y){
+  const ms=document.getElementById("monthFilter");
+  ms.innerHTML='<option value="All">All Months</option>';
+  if(y!=="All"){
+    (monthsByYear[y]||[]).forEach(m=>ms.innerHTML+=`<option>${m}</option>`);
+  } else {
+    [...new Set(Object.values(monthsByYear).flat())].forEach(m=>ms.innerHTML+=`<option>${m}</option>`);
+  }
+}
+
+function updateDashboard(year,month,teamKey,negoKey,sqftKeys,dateKey){
+  let filtered=allData.filter(r=>r[dateKey]);
+  if(year!=="All"||month!=="All"){
+    filtered=filtered.filter(r=>{
+      const raw=(r[dateKey]||"").trim(); const [d,m,y]=raw.split(/[-\/]/);
+      if(!y)return false;
+      const rowYear=parseInt(y);
+      const rowMonth=new Date(`${y}-${m}-01`).toLocaleString('en',{month:'short'})+"-"+y.slice(-2);
+      if(year!=="All"&&rowYear!=year)return false;
+      if(month!=="All"&&rowMonth.toLowerCase()!=month.toLowerCase())return false;
+      return true;
+    });
+  }
+
+  const teams={};
+  filtered.forEach(r=>{
+    const team=normalizeTeamName(r[teamKey]);
+    const nego=(r[negoKey]||"").toLowerCase();
+    let sqft=0;
+    sqftKeys.forEach(k=>{
+      const v=parseFloat((r[k]||"0").replace(/,/g,""))||0;
+      sqft+=v;
+    });
+
+    if(!teams[team]){
+      teams[team]={totalCount:0,totalSqft:0,
+        range0_100:{count:0,sqft:0},
+        range100_150:{count:0,sqft:0},
+        range150_200:{count:0,sqft:0},
+        range200_250:{count:0,sqft:0},
+        range250_300:{count:0,sqft:0},
+        above300:{count:0,sqft:0}
+      };
+    }
+
+    const t=teams[team];
+    t.totalCount++; t.totalSqft+=sqft;
+
+    if(nego.includes("0-100")) t.range0_100.count++, t.range0_100.sqft+=sqft;
+    else if(nego.includes("100-150")) t.range100_150.count++, t.range100_150.sqft+=sqft;
+    else if(nego.includes("150-200")) t.range150_200.count++, t.range150_200.sqft+=sqft;
+    else if(nego.includes("200-250")) t.range200_250.count++, t.range200_250.sqft+=sqft;
+    else if(nego.includes("250-300")) t.range250_300.count++, t.range250_300.sqft+=sqft;
+    else if(nego.includes("above 300")) t.above300.count++, t.above300.sqft+=sqft;
+  });
+
+  const sorted=Object.entries(teams).sort((a,b)=>b[1].totalCount-a[1].totalCount);
+  const tbody=document.querySelector("#dataTable tbody");
+  const tfoot=document.querySelector("#dataTable tfoot");
+  tbody.innerHTML=""; tfoot.innerHTML="";
+
+  let g={totalCount:0,totalSqft:0,
+    range0_100:{count:0,sqft:0},
+    range100_150:{count:0,sqft:0},
+    range150_200:{count:0,sqft:0},
+    range200_250:{count:0,sqft:0},
+    range250_300:{count:0,sqft:0},
+    above300:{count:0,sqft:0}
+  };
+  const pct=(p,t)=>t?Math.round((p/t)*100)+"%":"0%";
+
+  sorted.forEach(([team,t])=>{
+    Object.keys(g).forEach(k=>{
+      if(k!=="totalCount"&&k!=="totalSqft"){
+        g[k].count+=t[k].count; g[k].sqft+=t[k].sqft;
+      }
+    });
+    g.totalCount+=t.totalCount; g.totalSqft+=t.totalSqft;
+
+    tbody.insertAdjacentHTML("beforeend",`
+      <tr>
+        <td>${team}</td>
+        <td>${t.totalCount}</td><td>${Math.round(t.totalSqft)}</td>
+        <td>${t.range0_100.count}</td><td>${Math.round(t.range0_100.sqft)}</td><td>${pct(t.range0_100.count,t.totalCount)}</td>
+        <td>${t.range100_150.count}</td><td>${Math.round(t.range100_150.sqft)}</td><td>${pct(t.range100_150.count,t.totalCount)}</td>
+        <td>${t.range150_200.count}</td><td>${Math.round(t.range150_200.sqft)}</td><td>${pct(t.range150_200.count,t.totalCount)}</td>
+        <td>${t.range200_250.count}</td><td>${Math.round(t.range200_250.sqft)}</td><td>${pct(t.range200_250.count,t.totalCount)}</td>
+        <td>${t.range250_300.count}</td><td>${Math.round(t.range250_300.sqft)}</td><td>${pct(t.range250_300.count,t.totalCount)}</td>
+        <td>${t.above300.count}</td><td>${Math.round(t.above300.sqft)}</td><td>${pct(t.above300.count,t.totalCount)}</td>
+      </tr>
+    `);
+  });
+
+  tfoot.innerHTML=`
+    <tr>
+      <td>Grand Total</td>
+      <td>${g.totalCount}</td><td>${Math.round(g.totalSqft)}</td>
+      <td>${g.range0_100.count}</td><td>${Math.round(g.range0_100.sqft)}</td><td>${pct(g.range0_100.count,g.totalCount)}</td>
+      <td>${g.range100_150.count}</td><td>${Math.round(g.range100_150.sqft)}</td><td>${pct(g.range100_150.count,g.totalCount)}</td>
+      <td>${g.range150_200.count}</td><td>${Math.round(g.range150_200.sqft)}</td><td>${pct(g.range150_200.count,g.totalCount)}</td>
+      <td>${g.range200_250.count}</td><td>${Math.round(g.range200_250.sqft)}</td><td>${pct(g.range200_250.count,g.totalCount)}</td>
+      <td>${g.range250_300.count}</td><td>${Math.round(g.range250_300.sqft)}</td><td>${pct(g.range250_300.count,g.totalCount)}</td>
+      <td>${g.above300.count}</td><td>${Math.round(g.above300.sqft)}</td><td>${pct(g.above300.count,g.totalCount)}</td>
+    </tr>
+  `;
+
+  renderChart(sorted);
+}
+
+function renderChart(dataArr){
+  const ctx=document.getElementById("bookingsChart").getContext("2d");
+  if(chartInstance)chartInstance.destroy();
+  if(!dataArr.length)return;
+  const labels=dataArr.map(([t])=>t);
+  const counts=dataArr.map(([_,v])=>v.totalCount);
+  chartInstance=new Chart(ctx,{
+    type:"bar",plugins:[ChartDataLabels],
+    data:{labels,datasets:[{label:"Bookings",data:counts,
+      backgroundColor:(ctx)=>{const c=ctx.chart.ctx,area=ctx.chart.chartArea;if(!area)return"#00cc99";
+        const g=c.createLinearGradient(0,area.bottom,0,area.top);
+        g.addColorStop(0,"#ff9933");g.addColorStop(1,"#009933");return g;},
+      borderColor:"rgba(255,255,255,0.8)",borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        datalabels:{color:"white",anchor:"end",align:"start",font:{weight:"bold"},formatter:v=>v},
+        title:{display:true,text:"Total Bookings per Team (Negotiable Range)",color:"white"}},
+      scales:{x:{ticks:{color:"white",autoSkip:false,maxRotation:45,minRotation:45}},
+              y:{ticks:{color:"white"},beginAtZero:true}}}
+  });
+}
+</script>
+</body>
+</html>
