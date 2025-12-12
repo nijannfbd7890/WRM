@@ -2,127 +2,193 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<title>Advance Range | WRM Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Advance Range Report</title>
-
-<!-- ✅ Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
 <style>
-body {
-  font-family: "Segoe UI", sans-serif;
-  background: linear-gradient(135deg, #01414d, #015871);
-  color: white;
-  margin: 0;
-  text-align: center;
-}
-nav {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  background: rgba(255,255,255,0.1);
-  padding: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-}
-nav a {
-  text-decoration: none;
-  color: white;
-  background: #026b8a;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: bold;
-}
-nav a:hover {
-  background: #ffb347;
-  color: #003d52;
-}
-h2 {
-  text-align: center;
-  color: #fff;
-  margin-top: 25px;
-}
-.filters {
-  margin: 20px;
-}
-select {
-  padding: 8px 12px;
-  border-radius: 5px;
-  font-size: 1rem;
-}
-.cards {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin: 20px;
-}
-.card {
-  background: rgba(255,255,255,0.15);
-  border-radius: 12px;
-  padding: 20px;
-  width: 220px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-}
-.card h2 {
-  margin: 0;
-  color: #ffdb4d;
-  font-size: 2rem;
-}
-table {
-  width: 95%;
-  margin: 25px auto;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-  text-align: center;
-}
-th, td {
-  border: 1px solid rgba(255,255,255,0.2);
-  padding: 8px;
-}
-th {
-  background: rgba(255,255,255,0.15);
-}
-tfoot tr {
-  background: rgba(255,255,255,0.25);
-  font-weight: bold;
-}
-#chartContainer {
-  width: 90%;
-  max-width: 1100px;
-  height: 450px;
-  background: rgba(255,255,255,0.05);
-  border-radius: 12px;
-  padding: 15px;
-  margin: 30px auto;
-  box-shadow: 0 0 8px rgba(255,255,255,0.2);
-}
-canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
+  body {
+    background: linear-gradient(135deg, #015871, #01414d);
+    font-family: "Segoe UI", sans-serif;
+    color: white;
+    text-align: center;
+    margin: 0;
+  }
+
+  /* HEADER WITH TWO LOGOS */
+  header {
+    background: linear-gradient(90deg, #003d52, #026b8a);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    padding: 8px 30px;
+  }
+  .header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+  .logo-left, .logo-right {
+    background-color: white;
+    border-radius: 15px;
+    padding: 6px;
+    height: 90px;
+    width: auto;
+    box-shadow: 0 0 6px rgba(0,0,0,0.3);
+  }
+  .header-title {
+    flex: 1;
+    text-align: center;
+    color: white;
+  }
+  .header-title h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    line-height: 1.4;
+  }
+  .header-title span {
+    font-size: 1.2rem;
+    color: #ffd666;
+  }
+
+  /* NAV BAR */
+  nav {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    background: rgba(0,0,0,0.18);
+    padding: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    background: #026b8a;
+    padding: 8px 18px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.98rem;
+    transition: 0.25s;
+  }
+  nav a:hover {
+    background: #ffb347;
+    color: #003d52;
+  }
+  nav a.active {
+    background: #ffb347;
+    color: #003d52;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  }
+
+  /* FILTERS + CARDS */
+  .filters {
+    margin: 18px 0 5px;
+  }
+  select {
+    padding: 8px 14px;
+    margin: 0 6px;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+  }
+
+  .cards {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin: 12px 15px 25px;
+  }
+  .card {
+    background: rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 20px 30px;
+    min-width: 220px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .card h2 {
+    margin: 0;
+    font-size: 2.3rem;
+    color: #ffd666;
+  }
+  .card p {
+    margin: 6px 0 0;
+    font-size: 1rem;
+    opacity: 0.9;
+  }
+
+  /* TABLE */
+  table {
+    width: 95%;
+    margin: 0 auto 18px;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  th, td {
+    padding: 8px;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+  th {
+    background-color: rgba(255,255,255,0.18);
+  }
+  tfoot tr {
+    background-color: rgba(255,255,255,0.3);
+    font-weight: bold;
+  }
+
+  h2.section-title {
+    margin-top: 0;
+    margin-bottom: 12px;
+  }
+
+  /* CHART */
+  #chartContainer {
+    width: 92%;
+    max-width: 1300px;
+    margin: 12px auto 30px;
+    height: 420px;
+    background: rgba(0,0,0,0.18);
+    border-radius: 22px;
+    padding: 18px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.45);
+  }
+  canvas { width: 100% !important; height: 100% !important; }
 </style>
 </head>
 <body>
+<header>
+  <div class="header-container">
+    <img src="LOGO.png" alt="Company Logo" class="logo-left" />
+    <div class="header-title">
+      <h1>
+        Namma Family Builder and Developer Pvt. Ltd<br>
+        WRM Report Analysis Dashboard<br>
+        <span>Team - Marketing Management</span>
+      </h1>
+    </div>
+    <img src="cs.jpg" alt="Boss Photo" class="logo-right" />
+  </div>
+</header>
 
-<!-- ✅ Navigation -->
 <nav>
   <a href="index.html">🏠 Dashboard</a>
-  <a href="advance-range.html" style="background:#ffb347;color:#003d52;">📊 Advance Range</a>
+  <a href="advance-range.html" class="active">📊 Advance Range</a>
   <a href="budget-range.html">💰 Budget Range</a>
   <a href="sqft-range.html">📐 Sqft Range</a>
   <a href="negotiable-range.html">🤝 Negotiable Range</a>
   <a href="location-report.html">📍 Location</a>
 </nav>
 
-<!-- ✅ Filters -->
 <div class="filters">
   <select id="yearFilter"><option value="All">All Years</option></select>
   <select id="monthFilter"><option value="All">All Months</option></select>
 </div>
 
-<!-- ✅ Cards -->
 <div class="cards">
   <div class="card"><h2 id="totalBookings">0</h2><p>Total Bookings</p></div>
   <div class="card"><h2 id="totalSqft">0</h2><p>Total Sq Ft</p></div>
@@ -130,7 +196,7 @@ canvas {
   <div class="card"><h2 id="selectedMonth">All</h2><p>Selected Month</p></div>
 </div>
 
-<h2>TEAM WISE & ADVANCE RANGE REPORT</h2>
+<h2 class="section-title">TEAM WISE & ADVANCE RANGE REPORT</h2>
 
 <table id="dataTable">
   <thead>
@@ -154,108 +220,142 @@ canvas {
   <tfoot></tfoot>
 </table>
 
-<div id="chartContainer"><canvas id="bookingsChart"></canvas></div>
+<div id="chartContainer">
+  <canvas id="bookingsChart"></canvas>
+</div>
 
 <script>
 let allData = [], monthsByYear = {}, chartInstance = null;
 
-// ✅ CSV path (GitHub Pages)
-const CSV_URL = "https://nijannfbd7890.github.io/WRM/workbook.csv";
+/* Canonical team mapping so names don't split */
+const TEAM_CANONICAL = {
+  "suriya sir & selvakumar sir": "Suriya Sir & Selvakumar Sir",
+  "suriya sir": "Suriya Sir & Selvakumar Sir",
+  "selvakumar sir": "Suriya Sir & Selvakumar Sir",
+  "latha mam & ayyappan sir": "Latha Mam & Ayyappan Sir",
+  "latha mam": "Latha Mam & Ayyappan Sir",
+  "ayyappan sir": "Latha Mam & Ayyappan Sir"
+};
 
-// ✅ Load CSV
-Papa.parse(CSV_URL, {
-  download: true, header: true,
+function titleCase(str) {
+  if (!str) return "";
+  return str
+    .toLowerCase()
+    .replace(/\s*&\s*/g," & ")
+    .split(" ")
+    .filter(w => w.trim() !== "")
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ")
+    .trim();
+}
+function normalizeTeamName(value) {
+  let raw = (value || "Unknown").trim();
+  let key = raw.toLowerCase().replace(/\s*&\s*/g," & ").replace(/\s+/g," ").trim();
+  return TEAM_CANONICAL[key] || titleCase(key);
+}
+
+/* Load CSV */
+Papa.parse("https://nijannfbd7890.github.io/WRM/workbook.csv",{
+  download:true,
+  header:true,
   complete: res => initDashboard(res.data)
 });
 
-// ✅ Initialize Dashboard
-function initDashboard(data) {
+function initDashboard(data){
   const norm = s => s ? s.trim().toLowerCase() : "";
   const f = data[0];
 
   const teamKey = Object.keys(f).find(k => norm(k) === "team name");
-  const advKey  = Object.keys(f).find(k => norm(k) === "advance range");
-  const dateKey = Object.keys(f).find(k => norm(k) === "booking date");
-  const sqftKey = Object.keys(f).find(k => norm(k).includes("actual total sq-ft"));
+  const advKey  = Object.keys(f).find(k => norm(k).includes("advance range"));
+  const dateKey = Object.keys(f).find(k => norm(k).includes("booking date"));
 
-  console.log("Matched Columns →", { teamKey, advKey, dateKey, sqftKey });
-
-  if (!teamKey || !advKey || !sqftKey || !dateKey) {
-    alert("⚠ Missing required columns in CSV!");
+  if (!teamKey || !advKey || !dateKey) {
+    alert("⚠ Missing TEAM NAME / ADVANCE RANGE / BOOKING DATE in CSV");
     return;
   }
 
   allData = data.filter(d => d[teamKey]);
-  populateFilters(allData, dateKey);
-  updateDashboard("All", "All", teamKey, advKey, sqftKey, dateKey);
 
-  document.getElementById("yearFilter").addEventListener("change", e => {
+  // Expose filters
+  window.yearFilter  = document.getElementById("yearFilter");
+  window.monthFilter = document.getElementById("monthFilter");
+
+  populateFilters(allData,dateKey);
+  updateDashboard("All","All",teamKey,advKey,dateKey);
+
+  yearFilter.addEventListener("change",e => {
     updateMonthDropdown(e.target.value);
-    updateDashboard(e.target.value, document.getElementById("monthFilter").value, teamKey, advKey, sqftKey, dateKey);
+    updateDashboard(e.target.value, monthFilter.value, teamKey, advKey, dateKey);
   });
-
-  document.getElementById("monthFilter").addEventListener("change", e => {
-    updateDashboard(document.getElementById("yearFilter").value, e.target.value, teamKey, advKey, sqftKey, dateKey);
+  monthFilter.addEventListener("change",e => {
+    updateDashboard(yearFilter.value, e.target.value, teamKey, advKey, dateKey);
   });
 }
 
-// ✅ Year/Month Filters
-function populateFilters(data, dateKey) {
-  const years = []; monthsByYear = {};
-  data.forEach(r => {
-    const raw = (r[dateKey] || "").trim();
-    if (!raw) return;
-    const [d,m,y] = raw.split(/[-\/]/);
-    if (!y) return;
-    const year = parseInt(y);
-    const mon = new Date(`${y}-${m}-01`).toLocaleString('en',{month:'short'}) + "-" + y.slice(-2);
+function populateFilters(data,dateKey){
+  const years=[]; monthsByYear={};
+  data.forEach(r=>{
+    const raw=(r[dateKey]||"").trim();
+    if(!raw) return;
+    const [d,m,y]=raw.split(/[-\/]/);
+    if(!y) return;
+    const year=parseInt(y,10);
+    const mon = new Date(`${y}-${m}-01`).toLocaleString('en',{month:'short'})+"-"+y.slice(-2);
     if(!years.includes(year)) years.push(year);
-    if(!monthsByYear[year]) monthsByYear[year] = [];
+    if(!monthsByYear[year]) monthsByYear[year]=[];
     if(!monthsByYear[year].includes(mon)) monthsByYear[year].push(mon);
   });
   years.sort((a,b)=>b-a);
-  const yearSel = document.getElementById("yearFilter");
-  yearSel.innerHTML = '<option value="All">All</option>';
-  years.forEach(y => yearSel.innerHTML += `<option>${y}</option>`);
+  const yearSel = yearFilter;
+  yearSel.innerHTML='<option value="All">All</option>';
+  years.forEach(y=>yearSel.innerHTML+=`<option>${y}</option>`);
   updateMonthDropdown("All");
 }
 
-function updateMonthDropdown(selectedYear) {
-  const monthSel = document.getElementById("monthFilter");
+function updateMonthDropdown(selectedYear){
+  const monthSel = monthFilter;
   monthSel.innerHTML = '<option value="All">All</option>';
-  if (selectedYear !== "All") {
-    (monthsByYear[selectedYear]||[]).forEach(m => monthSel.innerHTML += `<option>${m}</option>`);
-  } else {
-    const allMonths = [...new Set(Object.values(monthsByYear).flat())];
-    allMonths.forEach(m => monthSel.innerHTML += `<option>${m}</option>`);
+  if(selectedYear!=="All"){
+    (monthsByYear[selectedYear]||[]).forEach(m=>monthSel.innerHTML+=`<option>${m}</option>`);
+  }else{
+    const allMonths=[...new Set(Object.values(monthsByYear).flat())];
+    allMonths.forEach(m=>monthSel.innerHTML+=`<option>${m}</option>`);
   }
 }
 
-// ✅ Update Table + Chart
-function updateDashboard(year, month, teamKey, advKey, sqftKey, dateKey) {
-  let filtered = allData.filter(r => r[dateKey]);
-  if (year !== "All" || month !== "All") {
-    filtered = filtered.filter(r => {
-      const raw = (r[dateKey] || "").trim();
-      const [d,m,y] = raw.split(/[-\/]/);
-      if (!y) return false;
-      const rowYear = parseInt(y);
-      const rowMonth = new Date(`${y}-${m}-01`).toLocaleString('en',{month:'short'}) + "-" + y.slice(-2);
-      if (year !== "All" && rowYear != year) return false;
-      if (month !== "All" && rowMonth.toLowerCase() != month.toLowerCase()) return false;
+function updateDashboard(year,month,teamKey,advKey,dateKey){
+  let filtered = allData.filter(r=>r[dateKey]);
+  if(year!=="All" || month!=="All"){
+    filtered = filtered.filter(r=>{
+      const raw=(r[dateKey]||"").trim();
+      const [d,m,y]=raw.split(/[-\/]/);
+      if(!y) return false;
+      const rowYear=parseInt(y,10);
+      const rowMonth=new Date(`${y}-${m}-01`).toLocaleString('en',{month:'short'})+"-"+y.slice(-2);
+      if(year!=="All" && rowYear!=year) return false;
+      if(month!=="All" && rowMonth.toLowerCase()!=month.toLowerCase()) return false;
       return true;
     });
   }
 
-  const teams = {};
-  filtered.forEach(r => {
-    const team = (r[teamKey] || "Unknown").trim();
-    const adv = (r[advKey] || "").toLowerCase();
-    const sqft = parseFloat((r[sqftKey]||"0").replace(/,/g,"")) || 0;
+  const teams={};
+  filtered.forEach(r=>{
+    const team = normalizeTeamName(r[teamKey]);
+    const adv  = (r[advKey] || "").toLowerCase();
 
-    if (!teams[team]) {
+    // Sum all "Actual TOTAL SQ-FT..." cols
+    let sqft = 0;
+    Object.keys(r).forEach(k=>{
+      if(k.toLowerCase().startsWith("actual total sq-ft")){
+        const raw = (r[k] + "").replace(/,/g,"").trim();
+        const v = parseFloat(raw);
+        if(!isNaN(v)) sqft += v;
+      }
+    });
+
+    if(!teams[team]){
       teams[team] = {
-        totalCount: 0, totalSqft: 0,
+        totalCount:0,totalSqft:0,
         below5k:{count:0,sqft:0},
         fiveToTen:{count:0,sqft:0},
         tenToTwentyFive:{count:0,sqft:0},
@@ -266,26 +366,39 @@ function updateDashboard(year, month, teamKey, advKey, sqftKey, dateKey) {
     t.totalCount++;
     t.totalSqft += sqft;
 
-    if (adv.includes("below 5k")) { t.below5k.count++; t.below5k.sqft += sqft; }
-    else if (adv.includes("5k") && adv.includes("10k")) { t.fiveToTen.count++; t.fiveToTen.sqft += sqft; }
-    else if (adv.includes("10") && adv.includes("25")) { t.tenToTwentyFive.count++; t.tenToTwentyFive.sqft += sqft; }
-    else if (adv.includes("above 25")) { t.aboveTwentyFive.count++; t.aboveTwentyFive.sqft += sqft; }
+    if(adv.includes("below 5k")){
+      t.below5k.count++; t.below5k.sqft += sqft;
+    }else if(adv.includes("5k") && adv.includes("10k")){
+      t.fiveToTen.count++; t.fiveToTen.sqft += sqft;
+    }else if(adv.includes("10") && adv.includes("25")){
+      t.tenToTwentyFive.count++; t.tenToTwentyFive.sqft += sqft;
+    }else if(adv.includes("above 25")){
+      t.aboveTwentyFive.count++; t.aboveTwentyFive.sqft += sqft;
+    }
   });
 
-  const sorted = Object.entries(teams).sort((a,b)=>b[1].totalCount - a[1].totalCount);
+  const sorted = Object.entries(teams).sort((a,b)=>b[1].totalCount-a[1].totalCount);
 
-  const tbody = document.querySelector("#dataTable tbody");
-  const tfoot = document.querySelector("#dataTable tfoot");
-  tbody.innerHTML = ""; tfoot.innerHTML = "";
-  const g = { totalCount:0, totalSqft:0, below5k:{count:0,sqft:0}, fiveToTen:{count:0,sqft:0}, tenToTwentyFive:{count:0,sqft:0}, aboveTwentyFive:{count:0,sqft:0} };
-  const pct = (a,b)=>b?(Math.round(a/b*100)+"%"):"0%";
+  const tbody=document.querySelector("#dataTable tbody");
+  const tfoot=document.querySelector("#dataTable tfoot");
+  tbody.innerHTML=""; tfoot.innerHTML="";
+
+  let g = {
+    totalCount:0,totalSqft:0,
+    below5k:{count:0,sqft:0},
+    fiveToTen:{count:0,sqft:0},
+    tenToTwentyFive:{count:0,sqft:0},
+    aboveTwentyFive:{count:0,sqft:0}
+  };
+  const pct=(p,t)=> t ? Math.round((p/t)*100)+"%" : "0%";
 
   sorted.forEach(([team,t])=>{
-    g.totalCount+=t.totalCount; g.totalSqft+=t.totalSqft;
-    g.below5k.count+=t.below5k.count; g.below5k.sqft+=t.below5k.sqft;
-    g.fiveToTen.count+=t.fiveToTen.count; g.fiveToTen.sqft+=t.fiveToTen.sqft;
-    g.tenToTwentyFive.count+=t.tenToTwentyFive.count; g.tenToTwentyFive.sqft+=t.tenToTwentyFive.sqft;
-    g.aboveTwentyFive.count+=t.aboveTwentyFive.count; g.aboveTwentyFive.sqft+=t.aboveTwentyFive.sqft;
+    g.totalCount += t.totalCount;
+    g.totalSqft  += t.totalSqft;
+    g.below5k.count += t.below5k.count; g.below5k.sqft += t.below5k.sqft;
+    g.fiveToTen.count += t.fiveToTen.count; g.fiveToTen.sqft += t.fiveToTen.sqft;
+    g.tenToTwentyFive.count += t.tenToTwentyFive.count; g.tenToTwentyFive.sqft += t.tenToTwentyFive.sqft;
+    g.aboveTwentyFive.count += t.aboveTwentyFive.count; g.aboveTwentyFive.sqft += t.aboveTwentyFive.sqft;
 
     tbody.insertAdjacentHTML("beforeend",`
       <tr>
@@ -295,28 +408,29 @@ function updateDashboard(year, month, teamKey, advKey, sqftKey, dateKey) {
         <td>${t.fiveToTen.count}</td><td>${Math.round(t.fiveToTen.sqft)}</td><td>${pct(t.fiveToTen.count,t.totalCount)}</td>
         <td>${t.tenToTwentyFive.count}</td><td>${Math.round(t.tenToTwentyFive.sqft)}</td><td>${pct(t.tenToTwentyFive.count,t.totalCount)}</td>
         <td>${t.aboveTwentyFive.count}</td><td>${Math.round(t.aboveTwentyFive.sqft)}</td><td>${pct(t.aboveTwentyFive.count,t.totalCount)}</td>
-      </tr>`);
+      </tr>
+    `);
   });
 
   tfoot.innerHTML = `
-  <tr>
-    <td>Grand Total</td>
-    <td>${g.totalCount}</td><td>${Math.round(g.totalSqft)}</td>
-    <td>${g.below5k.count}</td><td>${Math.round(g.below5k.sqft)}</td><td>${pct(g.below5k.count,g.totalCount)}</td>
-    <td>${g.fiveToTen.count}</td><td>${Math.round(g.fiveToTen.sqft)}</td><td>${pct(g.fiveToTen.count,g.totalCount)}</td>
-    <td>${g.tenToTwentyFive.count}</td><td>${Math.round(g.tenToTwentyFive.sqft)}</td><td>${pct(g.tenToTwentyFive.count,g.totalCount)}</td>
-    <td>${g.aboveTwentyFive.count}</td><td>${Math.round(g.aboveTwentyFive.sqft)}</td><td>${pct(g.aboveTwentyFive.count,g.totalCount)}</td>
-  </tr>`;
+    <tr>
+      <td>Grand Total</td>
+      <td>${g.totalCount}</td><td>${Math.round(g.totalSqft)}</td>
+      <td>${g.below5k.count}</td><td>${Math.round(g.below5k.sqft)}</td><td>${pct(g.below5k.count,g.totalCount)}</td>
+      <td>${g.fiveToTen.count}</td><td>${Math.round(g.fiveToTen.sqft)}</td><td>${pct(g.fiveToTen.count,g.totalCount)}</td>
+      <td>${g.tenToTwentyFive.count}</td><td>${Math.round(g.tenToTwentyFive.sqft)}</td><td>${pct(g.tenToTwentyFive.count,g.totalCount)}</td>
+      <td>${g.aboveTwentyFive.count}</td><td>${Math.round(g.aboveTwentyFive.sqft)}</td><td>${pct(g.aboveTwentyFive.count,g.totalCount)}</td>
+    </tr>
+  `;
 
   document.getElementById("totalBookings").textContent = g.totalCount;
-  document.getElementById("totalSqft").textContent = Math.round(g.totalSqft);
-  document.getElementById("selectedYear").textContent = year;
+  document.getElementById("totalSqft").textContent     = Math.round(g.totalSqft);
+  document.getElementById("selectedYear").textContent  = year;
   document.getElementById("selectedMonth").textContent = month;
 
   renderChart(sorted);
 }
 
-// ✅ Chart
 function renderChart(dataArr){
   const ctx=document.getElementById("bookingsChart").getContext("2d");
   if(chartInstance) chartInstance.destroy();
@@ -325,7 +439,7 @@ function renderChart(dataArr){
   const labels=dataArr.map(([t])=>t);
   const counts=dataArr.map(([_,v])=>v.totalCount);
 
-  chartInstance=new Chart(ctx,{
+  chartInstance = new Chart(ctx,{
     type:"bar",
     plugins:[ChartDataLabels],
     data:{
@@ -335,13 +449,13 @@ function renderChart(dataArr){
         data:counts,
         backgroundColor:(ctx)=>{
           const c=ctx.chart.ctx,area=ctx.chart.chartArea;
-          if(!area)return"#00cc99";
+          if(!area) return "#ffb347";
           const g=c.createLinearGradient(0,area.bottom,0,area.top);
-          g.addColorStop(0,"#ff9933");
-          g.addColorStop(1,"#009933");
+          g.addColorStop(0,"#ffb347");
+          g.addColorStop(1,"#00a86b");
           return g;
         },
-        borderColor:"rgba(255,255,255,0.8)",
+        borderColor:"rgba(255,255,255,0.9)",
         borderWidth:1
       }]
     },
@@ -351,17 +465,16 @@ function renderChart(dataArr){
       plugins:{
         legend:{display:false},
         datalabels:{
-          color:'white',
-          anchor:'end',
-          align:'start',
-          font:{weight:'bold'},
+          color:"white",
+          anchor:"end",
+          align:"start",
+          font:{weight:"bold"},
           formatter:v=>v
         },
         title:{
           display:true,
           text:"Total Bookings per Team (Advance Range)",
-          color:"white",
-          font:{size:16,weight:'bold'}
+          color:"white"
         }
       },
       scales:{
@@ -372,6 +485,5 @@ function renderChart(dataArr){
   });
 }
 </script>
-
 </body>
 </html>
