@@ -7,6 +7,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<!-- ===== REQUIRED LIBRARIES for PDF Download ===== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- =============================================== -->
+
 <style>
   body {
     background: linear-gradient(135deg, #015871, #01414d);
@@ -15,28 +20,95 @@
     text-align: center;
     margin: 0;
   }
+/* ========== HEADER SECTION (LOGO + TITLE + BOSS IMAGE) ========== */
+header {
+  width: 100%;
+  background: linear-gradient(90deg, #003d52, #026b8a);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 50px;
+}
+.logo-left, .logo-right {
+  height: 85px;
+  width: 85px;
+  border-radius: 50%;
+  background-color: white;
+  object-fit: cover;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  border: 3px solid #fff;
+}
+.boss-container {
+  position: relative;
+  display: inline-block;
+}
 
-  /* HEADER WITH TWO LOGOS */
-  header {
-    background: linear-gradient(90deg, #003d52, #026b8a);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    padding: 8px 30px;
-  }
-  .header-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    max-width: 1300px;
-    margin: 0 auto;
-  }
-  .logo-left, .logo-right {
-    background-color: white;
-    border-radius: 15px;
-    padding: 6px;
-    height: 90px;
-    width: auto;
-    box-shadow: 0 0 6px rgba(0,0,0,0.3);
-  }
+/* Tooltip styling */
+.boss-tooltip {
+  visibility: hidden;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  position: absolute;
+  bottom: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+/* Show on hover */
+.boss-container:hover .boss-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.header-title {
+  flex: 1;
+  text-align: center;
+  color: white;
+}
+.header-title h1 {
+  font-size: 1.8rem;
+  line-height: 1.5;
+  margin: 0;
+  font-weight: bold;
+}
+.header-title span {
+  font-size: 1.2rem;
+  color: #ffde59;
+  font-weight: 600;
+}
+ /* HEADER */
+header {
+  width: 100%;
+  background: linear-gradient(90deg, #003d52, #026b8a);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+ .header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 50px;
+}
+.logo-left, .logo-right {
+  height: 85px;
+  width: 85px;
+  border-radius: 50%;
+  background-color: white;
+  object-fit: cover;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  border: 3px solid #fff;
+}
   .header-title {
     flex: 1;
     text-align: center;
@@ -157,13 +229,139 @@
     padding: 18px;
     box-shadow: 0 0 12px rgba(0,0,0,0.45);
   }
+  #######FOR YEARS AND MONTH###############
+/* ==========================================
+   FOR YEARS AND MONTH — FILTER STYLING
+   ========================================== */
+<!-- .filters { -->
+  <!-- margin: 18px 0 5px; -->
+<!-- } -->
+
+/* Slightly move the filter box downward */
+.filters {
+  margin-top: 38px;     /* increased top margin for downward shift */
+  margin-bottom: 10px;  /* keeps space before the cards */
+}
+
+
+/* Beautify Year & Month dropdowns */
+.filters select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #015871;
+  color: #ffd666;
+  font-weight: bold;
+  padding: 10px 36px 10px 16px;
+  border: 2px solid #00a8b5;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s ease;
+}
+
+/* Custom arrow (just a little decorative icon) */
+.filters select::after {
+  content: "▼";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Hover and focus states */
+.filters select:hover {
+  background-color: #02798f;
+  border-color: #ffd666;
+}
+.filters select:focus {
+  outline: none;
+  box-shadow: 0 0 8px #ffd666;
+}
+
+/* Container background behind both dropdowns */
+.filter-box {
+  display: inline-flex;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 10px 20px;
+  border-radius: 12px;
+  backdrop-filter: blur(2px);
+}
+
+#########################################
   canvas { width: 100% !important; height: 100% !important; }
+/* --- Uniform filter dropdown style for all dashboards --- */
+.filters {
+  margin-top: 38px; /* same vertical spacing as main dashboard */
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.filters select {
+  background-color: #026b8a;
+  color: #ffd666;
+  font-weight: bold;
+  border: 2px solid #00b4b4;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  appearance: none;
+}
+
+.filters select:hover {
+  background-color: #038ba8;
+  border-color: #ffd666;
+  transform: scale(1.05);
+}
+
+.filters select:focus {
+  outline: none;
+  box-shadow: 0 0 8px #ffd666;
+}
+  
+  
+  
 </style>
 </head>
 <body>
+<!-- <header> -->
+  <!-- <div class="header-container"> -->
+    <!-- <img src="LOGO.png" alt="Company Logo" class="logo-left" /> -->
+    <!-- <div class="header-title"> -->
+      <!-- <h1> -->
+        <!-- Namma Family Builder and Developer Pvt. Ltd<br> -->
+        <!-- WRM Report Analysis Dashboard<br> -->
+        <!-- <span>Team - Marketing Management</span> -->
+      <!-- </h1> -->
+    <!-- </div> -->
+    <!-- <img src="cs.jpg" alt="Boss Photo" class="logo-right" /> -->
+  <!-- </div> -->
+<!-- </header> -->
+<!-- ========== HEADER ========== -->
 <header>
   <div class="header-container">
-    <img src="LOGO.png" alt="Company Logo" class="logo-left" />
+    <!-- Left Logo -->
+    <!-- <img src="LOGO.png" alt="Company Logo" class="logo-left" /> -->
+	<div class="boss-container">
+	  <!-- <img src="LOGO.png" alt="Company Logo" class="logo-left" /> -->
+	  <!-- <img src="LOGO.png" alt="Company Logo" class="logo-left" crossorigin="anonymous" /> -->
+		  <img 
+	  src="https://raw.githubusercontent.com/nijannfbd7890/WRM/main/LOGO.png" 
+	  alt="Company Logo" 
+	  class="logo-left" 
+	  crossorigin="anonymous"
+	/>
+	  <span class="boss-tooltip">NFBD</span>
+	</div>
+
+    <!-- Center Title -->
     <div class="header-title">
       <h1>
         Namma Family Builder and Developer Pvt. Ltd<br>
@@ -171,9 +369,21 @@
         <span>Team - Marketing Management</span>
       </h1>
     </div>
-    <img src="cs.jpg" alt="Boss Photo" class="logo-right" />
+	<!-- Right Boss Image -->
+    <div class="boss-container">
+	  <!-- <img src="cs.jpg" alt="Boss Photo" class="logo-right" /> -->
+	  <!-- <img src="cs.jpg" alt="Boss Photo" class="logo-right" crossorigin="anonymous" /> -->
+	  <img 
+	  src="https://raw.githubusercontent.com/nijannfbd7890/WRM/main/cs.jpg" 
+	  alt="Boss Photo" 
+	  class="logo-right" 
+	  crossorigin="anonymous"
+	/>
+	  <span class="boss-tooltip">Mr.Ponnusamy Karthik Sir</span>
+	</div>
+
   </div>
-</header>
+	</header>
 
 <nav>
   <a href="index.html">🏠 Dashboard</a>
@@ -183,13 +393,13 @@
   <a href="negotiable-range.html">🤝 Negotiable Range</a>
   <a href="location-report.html">📍 Location</a>
 </nav>
-
 <div class="filters">
   <select id="yearFilter"><option value="All">All Years</option></select>
   <select id="monthFilter"><option value="All">All Months</option></select>
 </div>
 
 <div class="cards">
+  <!-- 🔧 FIXED: id was wrong, now correct: totalBookings -->
   <div class="card"><h2 id="totalBookings">0</h2><p>Total Bookings</p></div>
   <div class="card"><h2 id="totalSqft">0</h2><p>Total Sq Ft</p></div>
   <div class="card"><h2 id="selectedYear">All</h2><p>Selected Year</p></div>
@@ -223,6 +433,24 @@
 <div id="chartContainer">
   <canvas id="bookingsChart"></canvas>
 </div>
+<div style="text-align:right; margin:10px 25px;">
+  <button id="downloadBtn" style="
+    background:#ffb347; 
+    color:#003d52; 
+    font-weight:600; 
+    border:none; 
+    border-radius:8px; 
+    padding:8px 16px; 
+    cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  ">
+    ⬇️ Download PDF
+  </button>
+</div>
+<!-- ========== FOOTER ========== -->
+<footer>
+  © 2025 Namma Family Builder & Developer Pvt. Ltd — All Rights Reserved
+</footer>
 
 <script>
 let allData = [], monthsByYear = {}, chartInstance = null;
@@ -307,14 +535,14 @@ function populateFilters(data,dateKey){
   });
   years.sort((a,b)=>b-a);
   const yearSel = yearFilter;
-  yearSel.innerHTML='<option value="All">All</option>';
+  yearSel.innerHTML='<option value="All">All Years</option>';
   years.forEach(y=>yearSel.innerHTML+=`<option>${y}</option>`);
   updateMonthDropdown("All");
 }
 
 function updateMonthDropdown(selectedYear){
   const monthSel = monthFilter;
-  monthSel.innerHTML = '<option value="All">All</option>';
+  monthSel.innerHTML = '<option value="All">All Months</option>';
   if(selectedYear!=="All"){
     (monthsByYear[selectedYear]||[]).forEach(m=>monthSel.innerHTML+=`<option>${m}</option>`);
   }else{
@@ -485,5 +713,43 @@ function renderChart(dataArr){
   });
 }
 </script>
+<script>
+document.getElementById("downloadBtn").addEventListener("click", async () => {
+  const { jsPDF } = window.jspdf;
+  const btn = document.getElementById("downloadBtn");
+  const tooltips = document.querySelectorAll(".boss-tooltip");
+
+  btn.style.visibility = "hidden";
+  tooltips.forEach(t => t.style.display = "none");
+
+  const dashboard = document.body;
+
+  await html2canvas(dashboard, {
+    scale: 1.2,
+    useCORS: true,
+    allowTaint: false, /* ✅ Prevents tainted canvas error */
+    backgroundColor: "#01414d"
+  }).then(canvas => {
+    const imgData = canvas.toDataURL("image/jpeg", 0.6);
+    const pdf = new jsPDF("l", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, imgHeight);
+    pdf.setFontSize(10);
+    pdf.setTextColor(100);
+    const timestamp = new Date().toLocaleString();
+    pdf.text(`Generated on: ${timestamp}`, 10, pageHeight - 5);
+    pdf.save("WRM_Dashboard.pdf");
+  }).catch(err => {
+    alert("❌ Error generating PDF: " + err);
+  }).finally(() => {
+    btn.style.visibility = "visible";
+    tooltips.forEach(t => t.style.display = "");
+  });
+});
+</script>
+
 </body>
 </html>

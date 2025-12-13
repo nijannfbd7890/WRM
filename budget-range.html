@@ -2,148 +2,220 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<title>Budget Range | WRM Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Budget Range Report | WRM Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<!-- These are the external libraries used -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- For graphs -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script> <!-- For labels on bars -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script> <!-- For reading CSV files -->
 
 <style>
-body {
-  background: linear-gradient(135deg, #015871, #01414d);
-  font-family: "Segoe UI", sans-serif;
-  color: white;
-  text-align: center;
-  margin: 0;
-  padding: 0;
-}
+  /* ==============================
+     BASIC PAGE STYLING
+     ============================== */
+  body {
+    background: linear-gradient(135deg, #015871, #01414d);
+    font-family: "Segoe UI", sans-serif;
+    color: white;
+    text-align: center;
+    margin: 0;
+  }
+
+  /* ==============================
+     HEADER SECTION (LOGO + TITLE + BOSS IMAGE)
+     ============================== */
 header {
+  width: 100%;
   background: linear-gradient(90deg, #003d52, #026b8a);
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  padding: 12px;
 }
-header img {
-  position: absolute;
-  left: 25px;
+ .header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 50px;
+}
+
+/* Company and Boss logos */
+.logo-left, .logo-right {
+  height: 85px;
+  width: 85px;
+  border-radius: 50%;
   background-color: white;
-  border-radius: 10px;
-  padding: 6px;
-  height: 80px;
-  width: auto;
+  object-fit: cover;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  border: 3px solid #fff;
 }
-h1 {
-  font-size: 1.6rem;
-  line-height: 1.4;
-  margin: 0;
-}
-nav {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  background: rgba(255,255,255,0.1);
-  padding: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-}
-nav a {
-  color: white;
-  text-decoration: none;
-  font-weight: bold;
-  background: #026b8a;
-  padding: 8px 15px;
-  border-radius: 6px;
-  transition: 0.3s;
-}
-nav a:hover {
-  background: #ffb347;
-  color: #003d52;
-}
-nav a.active {
-  background: #ffb347;
-  color: #003d52;
-}
-.filters { margin: 15px; }
-select {
-  padding: 8px; margin: 0 8px;
-  border-radius: 5px; font-size: 1rem;
-}
-table {
-  width: 95%; margin: 15px auto;
-  border-collapse: collapse;
-  font-size: 0.9rem; text-align: center;
-}
-th, td {
-  padding: 8px;
-  border: 1px solid rgba(255,255,255,0.2);
-}
-th { background-color: rgba(255,255,255,0.2); }
-tfoot tr {
-  background-color: rgba(255,255,255,0.3);
-  font-weight: bold;
-}
-/* DASHBOARD CARDS */
-.cards {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin: 25px;
-}
-.card {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 14px;
-  padding: 20px;
-  min-width: 200px;
-  width: 220px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  transition: transform 0.3s;
-}
-.card:hover {
-  transform: scale(1.05);
-}
-.card h2 {
-  margin: 0;
-  font-size: 2rem;
-  color: #ffde59;
-}
-.card p {
-  margin: 5px 0 0;
-  font-size: 1rem;
-}
-#chartContainer {
-  width: 90%; max-width: 1000px;
-  margin: 25px auto; height: 400px;
-  background: rgba(255,255,255,0.05);
-  border-radius: 10px; padding: 15px;
-  box-shadow: 0 0 8px rgba(255,255,255,0.2);
-}
-canvas { width: 100% !important; height: 100% !important; }
+
+/* Center title text in header */
+  .header-title {
+    flex: 1;
+    text-align: center;
+    color: white;
+  }
+  .header-title h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    line-height: 1.4;
+  }
+  .header-title span {
+    font-size: 1.2rem;
+    color: #ffd666;
+  }
+
+  /* ==============================
+     NAVIGATION BAR
+     ============================== */
+  nav {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    background: rgba(0,0,0,0.18);
+    padding: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    background: #026b8a;
+    padding: 8px 18px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.98rem;
+    transition: 0.25s;
+  }
+  nav a:hover {
+    background: #ffb347;
+    color: #003d52;
+  }
+  nav a.active {
+    background: #ffb347;
+    color: #003d52;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  }
+
+  /* ==============================
+     FILTERS (Dropdowns)
+     ============================== */
+  .filters {
+    margin: 18px 0 5px;
+  }
+  select {
+    padding: 8px 14px;
+    margin: 0 6px;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+  }
+
+  /* ==============================
+     SUMMARY CARDS (Totals display)
+     ============================== */
+  .cards {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin: 12px 15px 25px;
+  }
+  .card {
+    background: rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 20px 30px;
+    min-width: 220px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .card h2 {
+    margin: 0;
+    font-size: 2.3rem;
+    color: #ffd666;
+  }
+  .card p {
+    margin: 6px 0 0;
+    font-size: 1rem;
+    opacity: 0.9;
+  }
+
+  /* ==============================
+     TABLE STYLING
+     ============================== */
+  table {
+    width: 95%;
+    margin: 0 auto 18px;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  th, td {
+    padding: 8px;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+  th {
+    background-color: rgba(255,255,255,0.18);
+  }
+  tfoot tr {
+    background-color: rgba(255,255,255,0.3);
+    font-weight: bold;
+  }
+
+  h2.section-title {
+    margin-top: 0;
+    margin-bottom: 12px;
+  }
+
+  /* ==============================
+     CHART CONTAINER
+     ============================== */
+  #chartContainer {
+    width: 92%;
+    max-width: 1300px;
+    margin: 12px auto 30px;
+    height: 420px;
+    background: rgba(0,0,0,0.18);
+    border-radius: 22px;
+    padding: 18px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.45);
+  }
+  canvas { width: 100% !important; height: 100% !important; }
 </style>
 </head>
+
 <body>
+<!-- HEADER SECTION -->
 <header>
-  <img src="LOGO.png" alt="Company Logo" />
-  <h1>
-    Namma Family Builder and Developer Pvt. Ltd<br>
-    WRM Report Analysis Dashboard<br>
-    Budget Range Report
-  </h1>
+  <div class="header-container">
+    <img src="LOGO.png" alt="Company Logo" class="logo-left" />
+    <div class="header-title">
+      <h1>
+        Namma Family Builder and Developer Pvt. Ltd<br>
+        WRM Report Analysis Dashboard<br>
+        <span>Team - Marketing Management</span>
+      </h1>
+    </div>
+    <img src="cs.jpg" alt="Boss Photo" class="logo-right" />
+  </div>
 </header>
+
+<!-- NAVIGATION LINKS -->
 <nav>
   <a href="index.html">🏠 Dashboard</a>
-  <a href="advance-range.html" >📊 Advance Range</a>
+  <a href="advance-range.html">📊 Advance Range</a>
   <a href="budget-range.html" class="active">💰 Budget Range</a>
   <a href="sqft-range.html">📐 Sqft Range</a>
   <a href="negotiable-range.html">🤝 Negotiable Range</a>
   <a href="location-report.html">📍 Location</a>
 </nav>
-
+<!-- FILTERS FOR YEAR & MONTH -->
 <div class="filters">
   <select id="yearFilter"><option value="All">All Years</option></select>
   <select id="monthFilter"><option value="All">All Months</option></select>
-  <!-- <button class="back" onclick="window.location.href='index.html'">⬅ Back to Dashboard</button> -->
 </div>
 
-<!-- DASHBOARD CARDS -->
+<!-- DASHBOARD SUMMARY CARDS -->
 <div class="cards">
   <div class="card"><h2 id="totalBookings">0</h2><p>Total Bookings</p></div>
   <div class="card"><h2 id="totalSqft">0</h2><p>Total Sq Ft</p></div>
@@ -151,18 +223,19 @@ canvas { width: 100% !important; height: 100% !important; }
   <div class="card"><h2 id="selectedMonth">All</h2><p>Selected Month</p></div>
 </div>
 
+<!-- SECTION TITLE -->
+<h2 class="section-title">TEAM WISE & BUDGET RANGE REPORT</h2>
 
-<h2>BUDGET RANGE</h2>
-
-<table id="budgetTable">
+<!-- TABLE TO SHOW TEAM-WISE DATA -->
+<table id="dataTable">
   <thead>
     <tr>
       <th rowspan="2">Team Name</th>
       <th colspan="2">Overall</th>
       <th colspan="3">Below 20L</th>
-      <th colspan="3">20–30L</th>
-      <th colspan="3">30–40L</th>
-      <th colspan="3">40–70L</th>
+      <th colspan="3">20 - 30L</th>
+      <th colspan="3">30 - 40L</th>
+      <th colspan="3">40 - 70L</th>
       <th colspan="3">Above 70L</th>
     </tr>
     <tr>
@@ -178,14 +251,34 @@ canvas { width: 100% !important; height: 100% !important; }
   <tfoot></tfoot>
 </table>
 
+<!-- CHART -->
 <div id="chartContainer">
-  <canvas id="budgetChart"></canvas>
+  <canvas id="bookingsChart"></canvas>
 </div>
+<div style="text-align:right; margin:10px 25px;">
+  <button id="downloadBtn" style="
+    background:#ffb347; 
+    color:#003d52; 
+    font-weight:600; 
+    border:none; 
+    border-radius:8px; 
+    padding:8px 16px; 
+    cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  ">
+    ⬇️ Download PDF
+  </button>
+</div>
+<!-- ========== FOOTER ========== -->
+<footer>
+  © 2025 Namma Family Builder & Developer Pvt. Ltd — All Rights Reserved
+</footer>
 
 <script>
+/* ========== VARIABLES ========== */
 let allData = [], monthsByYear = {}, chartInstance = null;
 
-// ✅ Canonical team name mapping
+/* Map variations of team names to one consistent name */
 const TEAM_CANONICAL = {
   "suriya sir & selvakumar sir": "Suriya Sir & Selvakumar Sir",
   "suriya sir": "Suriya Sir & Selvakumar Sir",
@@ -195,12 +288,11 @@ const TEAM_CANONICAL = {
   "ayyappan sir": "Latha Mam & Ayyappan Sir"
 };
 
-// Title Case Helper
+/* Function to convert names into Title Case */
 function titleCase(str) {
   if (!str) return "";
-  return str
-    .toLowerCase()
-    .replace(/\s*&\s*/g, " & ")
+  return str.toLowerCase()
+    .replace(/\s*&\s*/g," & ")
     .split(" ")
     .filter(w => w.trim() !== "")
     .map(w => w.charAt(0).toUpperCase() + w.slice(1))
@@ -208,178 +300,222 @@ function titleCase(str) {
     .trim();
 }
 
-// Normalize Team Names
+/* Function to normalize team names (fix inconsistent spacing and casing) */
 function normalizeTeamName(value) {
   let raw = (value || "Unknown").trim();
-  let key = raw.toLowerCase().replace(/\s*&\s*/g, " & ").replace(/\s+/g, " ").trim();
+  let key = raw.toLowerCase().replace(/\s*&\s*/g," & ").replace(/\s+/g," ").trim();
   return TEAM_CANONICAL[key] || titleCase(key);
 }
 
-Papa.parse("https://nijannfbd7890.github.io/WRM/workbook.csv", {
-  download: true, header: true,
-  complete: res => initBudgetDashboard(res.data)
+/* ========== STEP 1: READ CSV USING PAPAPARSE ========== */
+Papa.parse("https://nijannfbd7890.github.io/WRM/workbook.csv",{
+  download:true,header:true,
+  complete: res => initDashboard(res.data) // Once loaded, call initDashboard()
 });
 
-function initBudgetDashboard(data) {
+/* ========== STEP 2: INITIALIZE DASHBOARD ========== */
+function initDashboard(data){
   const norm = s => s ? s.trim().toLowerCase() : "";
   const f = data[0];
-  const teamKey = Object.keys(f).find(k => norm(k) === "team name");
-  const sqftKey = Object.keys(f).find(k => norm(k).includes("actual total sq-ft"));
-  const dateKey = Object.keys(f).find(k => norm(k).includes("booking"));
-  const rangeKey = Object.keys(f).find(k => norm(k) === "budget range");
 
-  if (!teamKey || !sqftKey || !dateKey || !rangeKey) {
-    alert("⚠ Missing required columns in CSV!");
+  // Find required columns dynamically
+  const teamKey = Object.keys(f).find(k => norm(k).replace(/\s+/g, '') === "teamname");
+  const rangeKey= Object.keys(f).find(k => norm(k).includes("budget range"));
+  const dateKey = Object.keys(f).find(k => norm(k).includes("booking date"));
+
+  // Validate if columns exist
+  if(!teamKey || !rangeKey || !dateKey){
+    alert("⚠ Missing TEAM NAME / BUDGET RANGE / BOOKING DATE in CSV");
     return;
   }
 
-  allData = data.filter(d => d[teamKey]);
-  populateFilters(allData, dateKey);
-  updateBudgetRange("All", "All", teamKey, sqftKey, dateKey, rangeKey);
+  allData = data.filter(d=>d[teamKey]); // Keep only rows with team names
+  window.yearFilter  = document.getElementById("yearFilter");
+  window.monthFilter = document.getElementById("monthFilter");
 
-  document.getElementById("yearFilter").addEventListener("change", e => {
+  populateFilters(allData,dateKey);
+  updateDashboard("All","All",teamKey,rangeKey,dateKey);
+
+  // Add dropdown change listeners
+  yearFilter.addEventListener("change",e=>{
     updateMonthDropdown(e.target.value);
-    updateBudgetRange(e.target.value, monthFilter.value, teamKey, sqftKey, dateKey, rangeKey);
+    updateDashboard(e.target.value,monthFilter.value,teamKey,rangeKey,dateKey);
   });
-  document.getElementById("monthFilter").addEventListener("change", e => {
-    updateBudgetRange(yearFilter.value, e.target.value, teamKey, sqftKey, dateKey, rangeKey);
+  monthFilter.addEventListener("change",e=>{
+    updateDashboard(yearFilter.value,e.target.value,teamKey,rangeKey,dateKey);
   });
 }
 
+/* ========== STEP 3: GENERATE FILTERS (SAME AS ADVANCE RANGE) ========== */
+/* ========== STEP 3: GENERATE FILTERS (Same logic as Advance Range) ========== */
 function populateFilters(data,dateKey){
-  const years=[]; monthsByYear={};
-  data.forEach(r=>{
-    const raw=(r[dateKey]||"").trim();
-    if(!raw)return;
-    const [d,m,y]=raw.split(/[-\/]/);
-    if(!y)return;
-    const year=parseInt(y);
-    const mon=new Date(`${y}-${m}-01`).toLocaleString('en',{month:'short'})+"-"+y.slice(-2);
-    if(!years.includes(year))years.push(year);
-    if(!monthsByYear[year])monthsByYear[year]=[];
-    if(!monthsByYear[year].includes(mon))monthsByYear[year].push(mon);
+  const years = [];
+  monthsByYear = {};
+  data.forEach(r => {
+    const raw = (r[dateKey] || "").trim();
+    if (!raw) return;
+    const [d, m, y] = raw.split(/[-\/]/);
+    if (!y) return;
+    const year = parseInt(y, 10);
+    const mon = new Date(`${y}-${m}-01`).toLocaleString('en', { month: 'short' }) + "-" + y.slice(-2);
+    if (!years.includes(year)) years.push(year);
+    if (!monthsByYear[year]) monthsByYear[year] = [];
+    if (!monthsByYear[year].includes(mon)) monthsByYear[year].push(mon);
   });
   years.sort((a,b)=>b-a);
-  const yearSel=document.getElementById("yearFilter");
-  yearSel.innerHTML='<option value="All">All Years</option>';
-  years.forEach(y=>yearSel.innerHTML+=`<option>${y}</option>`);
+  const yearSel = document.getElementById("yearFilter");
+  yearSel.innerHTML = '<option value="All">All Years</option>';
+  years.forEach(y => yearSel.innerHTML += `<option>${y}</option>`);
   updateMonthDropdown("All");
 }
 
 function updateMonthDropdown(selectedYear){
-  const monthSel=document.getElementById("monthFilter");
-  monthSel.innerHTML='<option value="All">All Months</option>';
-  if(selectedYear!=="All"){
-    (monthsByYear[selectedYear]||[]).forEach(m=>monthSel.innerHTML+=`<option>${m}</option>`);
+  const monthSel = document.getElementById("monthFilter");
+  monthSel.innerHTML = '<option value="All">All Months</option>';
+  if(selectedYear !== "All"){
+    (monthsByYear[selectedYear] || []).forEach(m => monthSel.innerHTML += `<option>${m}</option>`);
   } else {
-    const allMonths=[...new Set(Object.values(monthsByYear).flat())];
-    allMonths.forEach(m=>monthSel.innerHTML+=`<option>${m}</option>`);
+    const allMonths = [...new Set(Object.values(monthsByYear).flat())];
+    allMonths.forEach(m => monthSel.innerHTML += `<option>${m}</option>`);
   }
 }
 
 
-function updateBudgetRange(year, month, teamKey, sqftKey, dateKey, rangeKey) {
-  const filtered = allData.filter(r => {
-    const raw = (r[dateKey] || "").trim();
-    if (!raw) return false;
-    const [d, m, y] = raw.split(/[-\/]/);
-    if (!y) return false;
-    const rowYear = parseInt(y);
-    const rowMonth = new Date(`${y}-${m}-01`).toLocaleString('en', { month: 'short' }) + "-" + y.slice(-2);
-    if (year !== "All" && rowYear != year) return false;
-    if (month !== "All" && rowMonth.toLowerCase() != month.toLowerCase()) return false;
-    return true;
-  });
+/* ========== STEP 4: CALCULATE + DISPLAY TEAM-WISE DATA ========== */
+function updateDashboard(year,month,teamKey,rangeKey,dateKey){
+  let filtered = allData.filter(r=>r[dateKey]); // Filter only rows with booking dates
 
-  const teams = {};
-  filtered.forEach(r => {
-    <!-- const team = (r[teamKey] || "Unknown").trim(); -->
-    <!-- const range = (r[rangeKey] || "").toLowerCase(); -->
-    <!-- const sqft = parseFloat((r[sqftKey] || "0").replace(/,/g, "")) || 0; -->
-	const team = normalizeTeamName(r[teamKey]); // ✅ fixed here
-    const range = (r[rangeKey] || "").toLowerCase();
-    <!-- const sqft = parseFloat((r[sqftKey] || "0").replace(/,/g, "").replace(/[^0-9.]/g, "")) || 0; -->
-	let sqft = 0;
-    const sqftCols = Object.keys(r).filter(k =>
-      k.toLowerCase().startsWith("actual total sq-ft") && !k.toLowerCase().includes("budget range")
-    );
-    sqftCols.forEach(col => {
-      const raw = (r[col] + "").replace(/,/g, "").trim();
-      const val = parseFloat(raw) || 0;
-      sqft += val;
+  // Filter based on Year and Month
+  if(year!=="All" || month!=="All"){
+    filtered = filtered.filter(r=>{
+      const raw=(r[dateKey]||"").trim();
+      const [d,m,y]=raw.split(/[-\/]/);
+      if(!y) return false;
+      const rowYear=parseInt(y,10);
+      const rowMonth=new Date(`${y}-${m}-01`).toLocaleString('en',{month:'short'})+"-"+y.slice(-2);
+      if(year!=="All" && rowYear!=year) return false;
+      if(month!=="All" && rowMonth.toLowerCase()!=month.toLowerCase()) return false;
+      return true;
+    });
+  }
+
+  /* Create an object to store results for each team */
+  const teams={};
+  filtered.forEach(r=>{
+    const team = normalizeTeamName(r[teamKey]);
+    const br   = (r[rangeKey] || "").toLowerCase();
+
+    /* Calculate total SQFT for each row */
+    let sqft = 0;
+    Object.keys(r).forEach(k=>{
+      if(k.toLowerCase().startsWith("actual total sq-ft")){
+        const raw=(r[k]+"").replace(/,/g,"").trim();
+        const v=parseFloat(raw);
+        if(!isNaN(v)) sqft+=v;
+      }
     });
 
-    if (!teams[team]) {
-      teams[team] = {
-        totalCount: 0, totalSqft: 0,
-        below20: { count: 0, sqft: 0 },
-        range20to30: { count: 0, sqft: 0 },
-        range30to40: { count: 0, sqft: 0 },
-        range40to70: { count: 0, sqft: 0 },
-        above70: { count: 0, sqft: 0 }
+    /* Initialize team object if not already present */
+    if(!teams[team]){
+      teams[team]={ totalCount:0,totalSqft:0,
+        below20:{count:0,sqft:0},
+        r20_30:{count:0,sqft:0},
+        r30_40:{count:0,sqft:0},
+        r40_70:{count:0,sqft:0},
+        above70:{count:0,sqft:0}
       };
     }
 
+    /* Increment counters and group into correct budget ranges */
     const t = teams[team];
-    t.totalCount++;
-    t.totalSqft += sqft;
+    t.totalCount++; t.totalSqft+=sqft;
 
-    if (range.includes("below 20")) t.below20.count++, t.below20.sqft += sqft;
-    else if (range.includes("20") && range.includes("30")) t.range20to30.count++, t.range20to30.sqft += sqft;
-    else if (range.includes("30") && range.includes("40")) t.range30to40.count++, t.range30to40.sqft += sqft;
-    else if (range.includes("40") && range.includes("70")) t.range40to70.count++, t.range40to70.sqft += sqft;
-    else if (range.includes("above 70")) t.above70.count++, t.above70.sqft += sqft;
+    if(br.includes("below 20")){
+      t.below20.count++; t.below20.sqft+=sqft;
+    }else if(br.includes("20") && br.includes("30")){
+      t.r20_30.count++; t.r20_30.sqft+=sqft;
+    }else if(br.includes("30") && br.includes("40")){
+      t.r30_40.count++; t.r30_40.sqft+=sqft;
+    }else if(br.includes("40") && br.includes("70")){
+      t.r40_70.count++; t.r40_70.sqft+=sqft;
+    }else if(br.includes("above 70")){
+      t.above70.count++; t.above70.sqft+=sqft;
+    }
   });
 
-  const tbody=document.querySelector("#budgetTable tbody");
-  const tfoot=document.querySelector("#budgetTable tfoot");
+  /* Sort teams by booking count (descending) */
+  const sorted=Object.entries(teams).sort((a,b)=>b[1].totalCount-a[1].totalCount);
+
+  /* Prepare table body and footer */
+  const tbody=document.querySelector("#dataTable tbody");
+  const tfoot=document.querySelector("#dataTable tfoot");
   tbody.innerHTML=""; tfoot.innerHTML="";
 
-  let g={totalCount:0,totalSqft:0,below20:{count:0,sqft:0},range20to30:{count:0,sqft:0},range30to40:{count:0,sqft:0},range40to70:{count:0,sqft:0},above70:{count:0,sqft:0}};
+  /* Global totals */
+  let g={totalCount:0,totalSqft:0,
+    below20:{count:0,sqft:0},
+    r20_30:{count:0,sqft:0},
+    r30_40:{count:0,sqft:0},
+    r40_70:{count:0,sqft:0},
+    above70:{count:0,sqft:0}
+  };
   const pct=(p,t)=>t?Math.round((p/t)*100)+"%":"0%";
 
-  const sorted = Object.entries(teams).sort((a,b)=>b[1].totalCount-a[1].totalCount);
-
+  /* Fill table rows for each team */
   sorted.forEach(([team,t])=>{
     g.totalCount+=t.totalCount; g.totalSqft+=t.totalSqft;
     g.below20.count+=t.below20.count; g.below20.sqft+=t.below20.sqft;
-    g.range20to30.count+=t.range20to30.count; g.range20to30.sqft+=t.range20to30.sqft;
-    g.range30to40.count+=t.range30to40.count; g.range30to40.sqft+=t.range30to40.sqft;
-    g.range40to70.count+=t.range40to70.count; g.range40to70.sqft+=t.range40to70.sqft;
+    g.r20_30.count+=t.r20_30.count; g.r20_30.sqft+=t.r20_30.sqft;
+    g.r30_40.count+=t.r30_40.count; g.r30_40.sqft+=t.r30_40.sqft;
+    g.r40_70.count+=t.r40_70.count; g.r40_70.sqft+=t.r40_70.sqft;
     g.above70.count+=t.above70.count; g.above70.sqft+=t.above70.sqft;
 
     tbody.insertAdjacentHTML("beforeend",`
       <tr>
-        <td>${team}</td><td>${t.totalCount}</td><td>${Math.round(t.totalSqft)}</td>
+        <td>${team}</td>
+        <td>${t.totalCount}</td><td>${Math.round(t.totalSqft)}</td>
         <td>${t.below20.count}</td><td>${Math.round(t.below20.sqft)}</td><td>${pct(t.below20.count,t.totalCount)}</td>
-        <td>${t.range20to30.count}</td><td>${Math.round(t.range20to30.sqft)}</td><td>${pct(t.range20to30.count,t.totalCount)}</td>
-        <td>${t.range30to40.count}</td><td>${Math.round(t.range30to40.sqft)}</td><td>${pct(t.range30to40.count,t.totalCount)}</td>
-        <td>${t.range40to70.count}</td><td>${Math.round(t.range40to70.sqft)}</td><td>${pct(t.range40to70.count,t.totalCount)}</td>
+        <td>${t.r20_30.count}</td><td>${Math.round(t.r20_30.sqft)}</td><td>${pct(t.r20_30.count,t.totalCount)}</td>
+        <td>${t.r30_40.count}</td><td>${Math.round(t.r30_40.sqft)}</td><td>${pct(t.r30_40.count,t.totalCount)}</td>
+        <td>${t.r40_70.count}</td><td>${Math.round(t.r40_70.sqft)}</td><td>${pct(t.r40_70.count,t.totalCount)}</td>
         <td>${t.above70.count}</td><td>${Math.round(t.above70.sqft)}</td><td>${pct(t.above70.count,t.totalCount)}</td>
-      </tr>`);
+      </tr>
+    `);
   });
 
+  /* Table footer (Grand Totals) */
   tfoot.innerHTML=`
     <tr>
-      <td>Grand Total</td><td>${g.totalCount}</td><td>${Math.round(g.totalSqft)}</td>
+      <td>Grand Total</td>
+      <td>${g.totalCount}</td><td>${Math.round(g.totalSqft)}</td>
       <td>${g.below20.count}</td><td>${Math.round(g.below20.sqft)}</td><td>${pct(g.below20.count,g.totalCount)}</td>
-      <td>${g.range20to30.count}</td><td>${Math.round(g.range20to30.sqft)}</td><td>${pct(g.range20to30.count,g.totalCount)}</td>
-      <td>${g.range30to40.count}</td><td>${Math.round(g.range30to40.sqft)}</td><td>${pct(g.range30to40.count,g.totalCount)}</td>
-      <td>${g.range40to70.count}</td><td>${Math.round(g.range40to70.sqft)}</td><td>${pct(g.range40to70.count,g.totalCount)}</td>
+      <td>${g.r20_30.count}</td><td>${Math.round(g.r20_30.sqft)}</td><td>${pct(g.r20_30.count,g.totalCount)}</td>
+      <td>${g.r30_40.count}</td><td>${Math.round(g.r30_40.sqft)}</td><td>${pct(g.r30_40.count,g.totalCount)}</td>
+      <td>${g.r40_70.count}</td><td>${Math.round(g.r40_70.sqft)}</td><td>${pct(g.r40_70.count,g.totalCount)}</td>
       <td>${g.above70.count}</td><td>${Math.round(g.above70.sqft)}</td><td>${pct(g.above70.count,g.totalCount)}</td>
-    </tr>`;
+    </tr>
+  `;
 
-  renderBudgetChart(sorted);
+  /* Update summary cards */
+  document.getElementById("totalBookings").textContent=g.totalCount;
+  document.getElementById("totalSqft").textContent=Math.round(g.totalSqft);
+  document.getElementById("selectedYear").textContent=year;
+  document.getElementById("selectedMonth").textContent=month;
+
+  /* Draw the bar chart */
+  renderChart(sorted);
 }
 
-function renderBudgetChart(dataArr){
-  const ctx=document.getElementById("budgetChart").getContext("2d");
-  if(chartInstance)chartInstance.destroy();
+/* ========== STEP 5: CREATE CHART ========== */
+function renderChart(dataArr){
+  const ctx=document.getElementById("bookingsChart").getContext("2d");
+  if(chartInstance) chartInstance.destroy();
   if(!dataArr.length) return;
+
   const labels=dataArr.map(([t])=>t);
   const counts=dataArr.map(([_,v])=>v.totalCount);
 
-  chartInstance=new Chart(ctx,{
+  chartInstance = new Chart(ctx,{
     type:"bar",
     plugins:[ChartDataLabels],
     data:{
@@ -389,23 +525,33 @@ function renderBudgetChart(dataArr){
         data:counts,
         backgroundColor:(ctx)=>{
           const c=ctx.chart.ctx,area=ctx.chart.chartArea;
-          if(!area)return "#00cc99";
+          if(!area) return "#ffb347";
           const g=c.createLinearGradient(0,area.bottom,0,area.top);
-          g.addColorStop(0,"#ff9933");
-          g.addColorStop(1,"#009933");
+          g.addColorStop(0,"#ffb347");
+          g.addColorStop(1,"#00a86b");
           return g;
         },
-        borderColor:"rgba(255,255,255,0.8)",borderWidth:1
+        borderColor:"rgba(255,255,255,0.9)",
+        borderWidth:1
       }]
     },
     options:{
-      responsive:true,maintainAspectRatio:false,
+      responsive:true,
+      maintainAspectRatio:false,
       plugins:{
         legend:{display:false},
         datalabels:{
-          color:'white',anchor:'end',align:'start',font:{weight:'bold'},formatter:v=>v
+          color:"white",
+          anchor:"end",
+          align:"start",
+          font:{weight:"bold"},
+          formatter:v=>v
         },
-        title:{display:true,text:"Total Bookings per Team (Budget Range)",color:"white"}
+        title:{
+          display:true,
+          text:"Total Bookings per Team (Budget Range)",
+          color:"white"
+        }
       },
       scales:{
         x:{ticks:{color:"white",autoSkip:false,maxRotation:45,minRotation:45}},
@@ -414,6 +560,57 @@ function renderBudgetChart(dataArr){
     }
   });
 }
+</script>
+<script>
+document.getElementById("downloadBtn").addEventListener("click", async () => {
+  const { jsPDF } = window.jspdf;
+
+  const btn = document.getElementById("downloadBtn");
+  const tooltips = document.querySelectorAll(".boss-tooltip");
+
+  // Hide button + tooltips during screenshot
+  btn.style.visibility = "hidden";
+  tooltips.forEach(t => t.style.display = "none");
+
+  // Capture the whole visible dashboard
+  const dashboard = document.body;
+
+  await html2canvas(dashboard, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: "#01414d"
+  }).then(canvas => {
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+    let y = 0;
+    pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+
+    // Add extra pages if content is long
+    if (imgHeight > pageHeight) {
+      let heightLeft = imgHeight - pageHeight;
+      while (heightLeft > 0) {
+        y = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+    }
+
+    pdf.save("WRM_Dashboard.pdf");
+  }).catch(err => {
+    alert("❌ Error generating PDF: " + err);
+  }).finally(() => {
+    // Restore visibility
+    btn.style.visibility = "visible";
+    tooltips.forEach(t => t.style.display = "");
+  });
+});
 </script>
 </body>
 </html>

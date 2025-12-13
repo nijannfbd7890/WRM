@@ -17,20 +17,93 @@ body {
   margin: 0;
   padding: 0;
 }
+ /* HEADER */
 header {
+  width: 100%;
   background: linear-gradient(90deg, #003d52, #026b8a);
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  padding: 12px;
 }
-header img {
-  position: absolute;
-  left: 25px;
+ .header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 50px;
+}
+.logo-left, .logo-right {
+  height: 85px;
+  width: 85px;
+  border-radius: 50%;
   background-color: white;
-  border-radius: 10px;
-  padding: 6px;
-  height: 80px;
-  width: auto;
+  object-fit: cover;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  border: 3px solid #fff;
 }
+.header-title {
+  flex: 1;
+  text-align: center;
+  color: white;
+}
+.header-title h1 {
+  font-size: 1.8rem;
+  line-height: 1.5;
+  margin: 0;
+  font-weight: bold;
+}
+.header-title span {
+  font-size: 1.2rem;
+  color: #ffde59;
+  font-weight: 600;
+}
+<!-- header { -->
+  <!-- background: linear-gradient(90deg, #003d52, #026b8a); -->
+  <!-- box-shadow: 0 2px 8px rgba(0,0,0,0.4); -->
+  <!-- padding: 12px; -->
+<!-- } -->
+<!-- header img { -->
+  <!-- position: absolute; -->
+  <!-- left: 25px; -->
+  <!-- background-color: white; -->
+  <!-- border-radius: 10px; -->
+  <!-- padding: 6px; -->
+  <!-- height: 80px; -->
+  <!-- width: auto; -->
+<!-- } -->
+  /* FILTERS + CARDS */
+  .filters {
+    margin: 18px 0 5px;
+  }
+  select {
+    padding: 8px 14px;
+    margin: 0 6px;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+  }
+
+  .cards {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin: 12px 15px 25px;
+  }
+  .card {
+    background: rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 20px 30px;
+    min-width: 220px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .card h2 {
+    margin: 0;
+    font-size: 2.3rem;
+    color: #ffd666;
+  }
+  .card p {
+    margin: 6px 0 0;
+    font-size: 1rem;
+    opacity: 0.9;
+  }
 h1 {
   font-size: 1.6rem;
   line-height: 1.4;
@@ -89,12 +162,17 @@ canvas { width: 100% !important; height: 100% !important; }
 
 <body>
 <header>
-  <img src="LOGO.png" alt="Company Logo" />
-  <h1>
-    Namma Family Builder and Developer Pvt. Ltd<br>
-    WRM Report Analysis Dashboard<br>
-    Sqft Range Wise Report
-  </h1>
+  <div class="header-container">
+    <img src="LOGO.png" alt="Company Logo" class="logo-left" />
+    <div class="header-title">
+      <h1>
+        Namma Family Builder and Developer Pvt. Ltd<br>
+        WRM Report Analysis Dashboard<br>
+        <span>Team - Marketing Management</span>
+      </h1>
+    </div>
+    <img src="cs.jpg" alt="Boss Photo" class="logo-right" />
+  </div>
 </header>
 
 <nav>
@@ -105,10 +183,15 @@ canvas { width: 100% !important; height: 100% !important; }
   <a href="negotiable-range.html">🤝 Negotiable Range</a>
   <a href="location-report.html">📍 Location</a>
 </nav>
-
 <div class="filters">
   <select id="yearFilter"><option value="All">All Years</option></select>
   <select id="monthFilter"><option value="All">All Months</option></select>
+</div>
+<div class="cards">
+  <div class="card"><h2 id="totalBookings">0</h2><p>Total Bookings</p></div>
+  <div class="card"><h2 id="totalSqft">0</h2><p>Total Sq Ft</p></div>
+  <div class="card"><h2 id="selectedYear">All</h2><p>Selected Year</p></div>
+  <div class="card"><h2 id="selectedMonth">All</h2><p>Selected Month</p></div>
 </div>
 
 <h2>TEAM WISE & SQFT RANGE WISE REPORT</h2>
@@ -140,6 +223,24 @@ canvas { width: 100% !important; height: 100% !important; }
 <div id="chartContainer">
   <canvas id="bookingsChart"></canvas>
 </div>
+<div style="text-align:right; margin:10px 25px;">
+  <button id="downloadBtn" style="
+    background:#ffb347; 
+    color:#003d52; 
+    font-weight:600; 
+    border:none; 
+    border-radius:8px; 
+    padding:8px 16px; 
+    cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  ">
+    ⬇️ Download PDF
+  </button>
+</div>
+<!-- ========== FOOTER ========== -->
+<footer>
+  © 2025 Namma Family Builder & Developer Pvt. Ltd — All Rights Reserved
+</footer>
 
 <script>
 let allData = [], monthsByYear = {}, chartInstance = null;
@@ -300,20 +401,43 @@ function updateDashboard(year, month, teamKey, sqftRangeKey, sqftKeys, dateKey) 
     `);
   });
 
-  tfoot.innerHTML = `
+     tfoot.innerHTML = `
     <tr>
       <td>Grand Total</td>
       <td>${g.totalCount}</td><td>${Math.round(g.totalSqft)}</td>
-      <td>${g.below1k.count}</td><td>${Math.round(g.below1k.sqft)}</td><td>${pct(g.below1k.count,g.totalCount)}</td>
-      <td>${g.oneTo15.count}</td><td>${Math.round(g.oneTo15.sqft)}</td><td>${pct(g.oneTo15.count,g.totalCount)}</td>
-      <td>${g.fifteenTo20.count}</td><td>${Math.round(g.fifteenTo20.sqft)}</td><td>${pct(g.fifteenTo20.count,g.totalCount)}</td>
-      <td>${g.twentyTo25.count}</td><td>${Math.round(g.twentyTo25.sqft)}</td><td>${pct(g.twentyTo25.count,g.totalCount)}</td>
-      <td>${g.above25.count}</td><td>${Math.round(g.above25.sqft)}</td><td>${pct(g.above25.count,g.totalCount)}</td>
+
+      <td>${g.below1k.count}</td>
+      <td>${Math.round(g.below1k.sqft)}</td>
+      <td>${pct(g.below1k.count, g.totalCount)}</td>
+
+      <td>${g.oneTo15.count}</td>
+      <td>${Math.round(g.oneTo15.sqft)}</td>
+      <td>${pct(g.oneTo15.count, g.totalCount)}</td>
+
+      <td>${g.fifteenTo20.count}</td>
+      <td>${Math.round(g.fifteenTo20.sqft)}</td>
+      <td>${pct(g.fifteenTo20.count, g.totalCount)}</td>
+
+      <td>${g.twentyTo25.count}</td>
+      <td>${Math.round(g.twentyTo25.sqft)}</td>
+      <td>${pct(g.twentyTo25.count, g.totalCount)}</td>
+
+      <td>${g.above25.count}</td>
+      <td>${Math.round(g.above25.sqft)}</td>
+      <td>${pct(g.above25.count, g.totalCount)}</td>
     </tr>
   `;
 
+  // ✅ Update KPI cards
+  document.getElementById("totalBookings").textContent = g.totalCount;
+  document.getElementById("totalSqft").textContent = Math.round(g.totalSqft);
+  document.getElementById("selectedYear").textContent = year;
+  document.getElementById("selectedMonth").textContent = month;
+
   renderChart(sorted);
 }
+
+
 
 function renderChart(dataArr) {
   const ctx = document.getElementById("bookingsChart").getContext("2d");
@@ -341,6 +465,57 @@ function renderChart(dataArr) {
     }
   });
 }
+</script>
+<script>
+document.getElementById("downloadBtn").addEventListener("click", async () => {
+  const { jsPDF } = window.jspdf;
+
+  const btn = document.getElementById("downloadBtn");
+  const tooltips = document.querySelectorAll(".boss-tooltip");
+
+  // Hide button + tooltips during screenshot
+  btn.style.visibility = "hidden";
+  tooltips.forEach(t => t.style.display = "none");
+
+  // Capture the whole visible dashboard
+  const dashboard = document.body;
+
+  await html2canvas(dashboard, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: "#01414d"
+  }).then(canvas => {
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+    let y = 0;
+    pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+
+    // Add extra pages if content is long
+    if (imgHeight > pageHeight) {
+      let heightLeft = imgHeight - pageHeight;
+      while (heightLeft > 0) {
+        y = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+    }
+
+    pdf.save("WRM_Dashboard.pdf");
+  }).catch(err => {
+    alert("❌ Error generating PDF: " + err);
+  }).finally(() => {
+    // Restore visibility
+    btn.style.visibility = "visible";
+    tooltips.forEach(t => t.style.display = "");
+  });
+});
 </script>
 </body>
 </html>

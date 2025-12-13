@@ -4,11 +4,22 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>WRM Report Analysis Dashboard</title>
+
+<!-- ========== SCRIPT LIBRARIES ========== -->
+<!-- Chart.js → Used for creating charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js plugin → Adds labels on the bars -->
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<!-- PapaParse → Used to read CSV files directly from GitHub -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
+<!-- For PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
 <style>
+/* ========== PAGE STYLING ========== */
 body {
   background: linear-gradient(135deg, #015871, #01414d);
   font-family: "Segoe UI", sans-serif;
@@ -18,7 +29,7 @@ body {
   padding: 0;
 }
 
-/* HEADER */
+/* ========== HEADER SECTION (LOGO + TITLE + BOSS IMAGE) ========== */
 header {
   width: 100%;
   background: linear-gradient(90deg, #003d52, #026b8a);
@@ -39,6 +50,37 @@ header {
   box-shadow: 0 0 10px rgba(0,0,0,0.3);
   border: 3px solid #fff;
 }
+.boss-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* Tooltip styling */
+.boss-tooltip {
+  visibility: hidden;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  position: absolute;
+  bottom: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+/* Show on hover */
+.boss-container:hover .boss-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
 .header-title {
   flex: 1;
   text-align: center;
@@ -56,7 +98,7 @@ header {
   font-weight: 600;
 }
 
-/* NAVIGATION */
+/* ========== NAVIGATION BAR ========== */
 nav {
   display: flex;
   justify-content: center;
@@ -80,7 +122,7 @@ nav a:hover, nav a.active {
   color: #003d52;
 }
 
-/* DASHBOARD CARDS */
+/* ========== DASHBOARD CARDS (TOP SUMMARY BOXES) ========== */
 .cards {
   display: flex;
   justify-content: center;
@@ -98,7 +140,7 @@ nav a:hover, nav a.active {
   transition: transform 0.3s;
 }
 .card:hover {
-  transform: scale(1.05);
+  transform: scale(1.05); /* Slight zoom when hovered */
 }
 .card h2 {
   margin: 0;
@@ -110,7 +152,7 @@ nav a:hover, nav a.active {
   font-size: 1rem;
 }
 
-/* CHART CONTAINER */
+/* ========== CHART CONTAINER (BAR CHART BOX) ========== */
 #chartContainer {
   width: 90%;
   max-width: 1000px;
@@ -123,19 +165,98 @@ nav a:hover, nav a.active {
 }
 canvas { width: 100% !important; height: 100% !important; }
 
+/* ========== FOOTER ========== */
 footer {
   text-align: center;
   color: #bbb;
   padding: 15px;
   font-size: 0.9rem;
 }
+#######FOR YEARS AND MONTH###############
+/* ==========================================
+   FOR YEARS AND MONTH — FILTER STYLING
+   ========================================== */
+<!-- .filters { -->
+  <!-- margin: 18px 0 5px; -->
+<!-- } -->
+
+/* Slightly move the filter box downward */
+.filters {
+  margin-top: 38px;     /* increased top margin for downward shift */
+  margin-bottom: 10px;  /* keeps space before the cards */
+}
+
+
+/* Beautify Year & Month dropdowns */
+.filters select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #015871;
+  color: #ffd666;
+  font-weight: bold;
+  padding: 10px 36px 10px 16px;
+  border: 2px solid #00a8b5;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s ease;
+}
+
+/* Custom arrow (just a little decorative icon) */
+.filters select::after {
+  content: "▼";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Hover and focus states */
+.filters select:hover {
+  background-color: #02798f;
+  border-color: #ffd666;
+}
+.filters select:focus {
+  outline: none;
+  box-shadow: 0 0 8px #ffd666;
+}
+
+/* Container background behind both dropdowns */
+.filter-box {
+  display: inline-flex;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 10px 20px;
+  border-radius: 12px;
+  backdrop-filter: blur(2px);
+}
+
+#########################################
 </style>
 </head>
 
 <body>
+<!-- ========== HEADER ========== -->
 <header>
   <div class="header-container">
-    <img src="LOGO.png" alt="Company Logo" class="logo-left" />
+    <!-- Left Logo -->
+    <!-- <img src="LOGO.png" alt="Company Logo" class="logo-left" /> -->
+	<div class="boss-container">
+	  <!-- <img src="LOGO.png" alt="Company Logo" class="logo-left" /> -->
+	  <!-- <img src="LOGO.png" alt="Company Logo" class="logo-left" crossorigin="anonymous" /> -->
+		  <img 
+	  src="https://raw.githubusercontent.com/nijannfbd7890/WRM/main/LOGO.png" 
+	  alt="Company Logo" 
+	  class="logo-left" 
+	  crossorigin="anonymous"
+	/>
+	  <span class="boss-tooltip">NFBD</span>
+	</div>
+
+    <!-- Center Title -->
     <div class="header-title">
       <h1>
         Namma Family Builder and Developer Pvt. Ltd<br>
@@ -143,11 +264,24 @@ footer {
         <span>Team - Marketing Management</span>
       </h1>
     </div>
-    <img src="cs.jpg" alt="Boss Photo" class="logo-right" />
+
+    <!-- Right Boss Image -->
+    <div class="boss-container">
+	  <!-- <img src="cs.jpg" alt="Boss Photo" class="logo-right" /> -->
+	  <!-- <img src="cs.jpg" alt="Boss Photo" class="logo-right" crossorigin="anonymous" /> -->
+	  <img 
+	  src="https://raw.githubusercontent.com/nijannfbd7890/WRM/main/cs.jpg" 
+	  alt="Boss Photo" 
+	  class="logo-right" 
+	  crossorigin="anonymous"
+	/>
+	  <span class="boss-tooltip">Mr.Ponnusamy Karthik Sir</span>
+	</div>
+
   </div>
 </header>
 
-<!-- NAVIGATION -->
+<!-- ========== NAVIGATION BAR ========== -->
 <nav>
   <a href="index.html" class="active">🏠 Dashboard</a>
   <a href="advance-range.html">📊 Advance Range</a>
@@ -156,14 +290,14 @@ footer {
   <a href="negotiable-range.html">🤝 Negotiable Range</a>
   <a href="location-report.html">📍 Location</a>
 </nav>
-
-<!-- FILTERS -->
+<!-- ========== FILTER DROPDOWNS ========== -->
 <div class="filters">
   <select id="yearFilter"><option value="All">All Years</option></select>
-  <select id="monthFilter"><option value="All">All Months</option></select>
+  <select id="monthFilter"><option value="All">All Months</option></select>  
 </div>
 
-<!-- DASHBOARD CARDS -->
+
+<!-- ========== SUMMARY CARDS (Top Stats) ========== -->
 <div class="cards">
   <div class="card"><h2 id="totalBookings">0</h2><p>Overall Bookings</p></div>
   <div class="card"><h2 id="totalSqft">0</h2><p>Overall Sq Ft</p></div>
@@ -171,19 +305,39 @@ footer {
   <div class="card"><h2 id="selectedMonth">All</h2><p>Selected Month</p></div>
 </div>
 
-<!-- CHART OVERVIEW -->
+<!-- ========== OVERVIEW CHART ========== -->
 <div id="chartContainer">
   <canvas id="overviewChart"></canvas>
 </div>
+<div style="text-align:right; margin:10px 25px;">
+  <button id="downloadBtn" style="
+    background:#ffb347; 
+    color:#003d52; 
+    font-weight:600; 
+    border:none; 
+    border-radius:8px; 
+    padding:8px 16px; 
+    cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  ">
+    ⬇️ Download PDF
+  </button>
+</div>
 
+<!-- ========== FOOTER ========== -->
 <footer>
   © 2025 Namma Family Builder & Developer Pvt. Ltd — All Rights Reserved
 </footer>
-
 <script>
+/* ==========================================================
+   JAVASCRIPT SECTION — DASHBOARD FUNCTIONALITY
+   ========================================================== */
+
 let allData = [], monthsByYear = {}, chartInstance = null;
 
-// TEAM NAME NORMALIZATION (same logic used in all other pages)
+/* TEAM NAME NORMALIZATION
+   - This ensures team names are consistent even if written differently in CSV
+   - Example: "SURIYA SIR", "suriya sir", "Suriya sir" → all treated as one */
 const TEAM_CANONICAL = {
   "suriya sir & selvakumar sir": "Suriya Sir & Selvakumar Sir",
   "suriya sir": "Suriya Sir & Selvakumar Sir",
@@ -192,37 +346,54 @@ const TEAM_CANONICAL = {
   "latha mam": "Latha Mam & Ayyappan Sir",
   "ayyappan sir": "Latha Mam & Ayyappan Sir"
 };
+
+/* Convert text to Title Case */
 function titleCase(str) {
   if (!str) return "";
   return str.toLowerCase().replace(/\s*&\s*/g, " & ")
   .split(" ").filter(Boolean)
   .map(w => w[0].toUpperCase() + w.slice(1)).join(" ").trim();
 }
+
+/* Clean and normalize names */
 function normalizeTeamName(v) {
   let key = (v || "").toLowerCase().replace(/\s*&\s*/g, " & ").replace(/\s+/g, " ").trim();
   return TEAM_CANONICAL[key] || titleCase(key);
 }
 
-// LOAD CSV DATA
+/* ==========================================================
+   STEP 1: LOAD CSV FILE FROM GITHUB USING PAPAPARSE
+   ========================================================== */
 Papa.parse("https://nijannfbd7890.github.io/WRM/workbook.csv", {
   download: true, header: true,
   complete: res => initDashboard(res.data)
 });
 
+/* ==========================================================
+   STEP 2: INITIALIZE DASHBOARD AFTER CSV IS LOADED
+   ========================================================== */
 function initDashboard(data) {
   const norm = s => s ? s.trim().toLowerCase() : "";
   const f = data[0];
+
+  // Identify important columns
   const teamKey = Object.keys(f).find(k => norm(k) === "team name");
   const sqftKeys = Object.keys(f).filter(k => norm(k).startsWith("actual total sq-ft"));
   const dateKey = Object.keys(f).find(k => norm(k).includes("booking"));
+
+  // If any key is missing, show error
   if (!teamKey || !sqftKeys.length || !dateKey) {
     alert("⚠ Missing required columns in CSV");
     return;
   }
-  allData = data.filter(d => d[teamKey]);
+
+  allData = data.filter(d => d[teamKey]); // Remove empty rows
+
+  // Load filters and initial view
   populateFilters(allData, dateKey);
   updateDashboard("All", "All", teamKey, sqftKeys, dateKey);
 
+  // Dropdown change events
   yearFilter.addEventListener("change", e => {
     updateMonthDropdown(e.target.value);
     updateDashboard(e.target.value, monthFilter.value, teamKey, sqftKeys, dateKey);
@@ -232,6 +403,9 @@ function initDashboard(data) {
   });
 }
 
+/* ==========================================================
+   STEP 3: CREATE FILTER DROPDOWN VALUES (YEAR / MONTH)
+   ========================================================== */
 function populateFilters(data, dateKey) {
   const years = [];
   monthsByYear = {};
@@ -246,6 +420,8 @@ function populateFilters(data, dateKey) {
     if (!monthsByYear[year]) monthsByYear[year] = [];
     if (!monthsByYear[year].includes(mon)) monthsByYear[year].push(mon);
   });
+
+  // Sort years (latest first)
   years.sort((a,b)=>b-a);
   const yearSel = document.getElementById("yearFilter");
   yearSel.innerHTML = '<option value="All">All Years</option>';
@@ -253,6 +429,7 @@ function populateFilters(data, dateKey) {
   updateMonthDropdown("All");
 }
 
+/* Populate months dynamically based on selected year */
 function updateMonthDropdown(selectedYear) {
   const monthSel = document.getElementById("monthFilter");
   monthSel.innerHTML = '<option value="All">All Months</option>';
@@ -264,8 +441,13 @@ function updateMonthDropdown(selectedYear) {
   }
 }
 
+/* ==========================================================
+   STEP 4: UPDATE DASHBOARD — CALCULATE TEAM TOTALS
+   ========================================================== */
 function updateDashboard(year, month, teamKey, sqftKeys, dateKey) {
   let filtered = allData.filter(r => r[dateKey]);
+
+  // Filter by selected year/month
   if (year !== "All" || month !== "All") {
     filtered = filtered.filter(r => {
       const raw = (r[dateKey] || "").trim();
@@ -279,50 +461,71 @@ function updateDashboard(year, month, teamKey, sqftKeys, dateKey) {
     });
   }
 
+  // Group bookings by Team
   const teams = {};
   filtered.forEach(r => {
     const team = normalizeTeamName(r[teamKey]);
     let sqft = 0;
+
+    // Add all SQFT values from multiple columns
     sqftKeys.forEach(k => {
       const v = parseFloat((r[k] || "0").replace(/,/g, "")) || 0;
       sqft += v;
     });
+
     if (!teams[team]) teams[team] = { count: 0, sqft: 0 };
     teams[team].count++;
     teams[team].sqft += sqft;
   });
 
+  // Sort teams by number of bookings (descending)
   const sorted = Object.entries(teams).sort((a,b)=>b[1].count-a[1].count);
+
+  // Calculate totals
   const totalCount = sorted.reduce((a,[,v])=>a+v.count,0);
   const totalSqft = sorted.reduce((a,[,v])=>a+v.sqft,0);
 
+  // Update cards
   document.getElementById("totalBookings").textContent = totalCount;
   document.getElementById("totalSqft").textContent = Math.round(totalSqft);
   document.getElementById("selectedYear").textContent = year;
   document.getElementById("selectedMonth").textContent = month;
 
+  // Render the bar chart
   renderChart(sorted);
 }
 
+/* ==========================================================
+   STEP 5: RENDER CHART USING CHART.JS
+   ========================================================== */
 function renderChart(dataArr) {
   const ctx = document.getElementById("overviewChart").getContext("2d");
-  if (chartInstance) chartInstance.destroy();
+  if (chartInstance) chartInstance.destroy(); // Reset old chart
   if (!dataArr.length) return;
-  const labels = dataArr.map(([t]) => t);
-  const counts = dataArr.map(([_,v]) => v.count);
+
+  const labels = dataArr.map(([t]) => t); // Team names
+  const counts = dataArr.map(([_,v]) => v.count); // Booking counts
+
+  // Create colorful gradient chart
   chartInstance = new Chart(ctx,{
     type:"bar",
     plugins:[ChartDataLabels],
-    data:{labels,datasets:[{label:"Total Bookings",data:counts,
-      backgroundColor:(ctx)=>{
-        const c=ctx.chart.ctx,area=ctx.chart.chartArea;
-        if(!area)return"#00cc99";
-        const g=c.createLinearGradient(0,area.bottom,0,area.top);
-        g.addColorStop(0,"#ff9933");
-        g.addColorStop(1,"#009933");
-        return g;
-      },
-      borderColor:"rgba(255,255,255,0.8)",borderWidth:1}]},
+    data:{
+      labels,
+      datasets:[{
+        label:"Total Bookings",
+        data:counts,
+        backgroundColor:(ctx)=>{
+          const c=ctx.chart.ctx,area=ctx.chart.chartArea;
+          if(!area)return"#00cc99";
+          const g=c.createLinearGradient(0,area.bottom,0,area.top);
+          g.addColorStop(0,"#ff9933");
+          g.addColorStop(1,"#009933");
+          return g;
+        },
+        borderColor:"rgba(255,255,255,0.8)",borderWidth:1
+      }]
+    },
     options:{
       responsive:true,maintainAspectRatio:false,
       plugins:{
@@ -330,11 +533,59 @@ function renderChart(dataArr) {
         datalabels:{color:"white",anchor:"end",align:"start",font:{weight:"bold"},formatter:v=>v},
         title:{display:true,text:"Total Bookings per Team (Overview)",color:"white"}
       },
-      scales:{x:{ticks:{color:"white",autoSkip:false,maxRotation:45,minRotation:45}},
-              y:{ticks:{color:"white"},beginAtZero:true}}
+      scales:{
+        x:{ticks:{color:"white",autoSkip:false,maxRotation:45,minRotation:45}},
+        y:{ticks:{color:"white"},beginAtZero:true}
+      }
     }
   });
 }
 </script>
+<script>
+document.getElementById("downloadBtn").addEventListener("click", async () => {
+  const { jsPDF } = window.jspdf;
+
+  const btn = document.getElementById("downloadBtn");
+  const tooltips = document.querySelectorAll(".boss-tooltip");
+
+  btn.style.visibility = "hidden";
+  tooltips.forEach(t => t.style.display = "none");
+
+  const dashboard = document.body;
+
+  await html2canvas(dashboard, {
+    scale: 1.2,             // ⚙️ Lower scale = smaller image
+    useCORS: true,
+    backgroundColor: "#01414d"
+  }).then(canvas => {
+    const imgData = canvas.toDataURL("image/jpeg", 0.6); // ⚙️ Compress to JPEG (quality 60%)
+
+    // 🧾 Landscape A4 page
+    const pdf = new jsPDF("l", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+    let y = 0;
+    pdf.addImage(imgData, "JPEG", 0, y, imgWidth, imgHeight);
+
+    // Add timestamp footer
+    pdf.setFontSize(10);
+    pdf.setTextColor(100);
+    const timestamp = new Date().toLocaleString();
+    pdf.text(`Generated on: ${timestamp}`, 10, pageHeight - 5);
+
+    pdf.save("WRM_Dashboard.pdf");
+  }).catch(err => {
+    alert("❌ Error generating PDF: " + err);
+  }).finally(() => {
+    btn.style.visibility = "visible";
+    tooltips.forEach(t => t.style.display = "");
+  });
+});
+</script>
+
 </body>
 </html>
