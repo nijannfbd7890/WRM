@@ -541,49 +541,58 @@ function renderChart(dataArr) {
   });
 }
 </script>
+<!-- === PDF DOWNLOAD (Same logic as index.html) === -->
 <script>
 document.getElementById("downloadBtn").addEventListener("click", async () => {
   const { jsPDF } = window.jspdf;
-
   const btn = document.getElementById("downloadBtn");
   const tooltips = document.querySelectorAll(".boss-tooltip");
 
+  // Hide unnecessary UI before capture
   btn.style.visibility = "hidden";
-  tooltips.forEach(t => t.style.display = "none");
+  tooltips.forEach(t => (t.style.display = "none"));
+  window.scrollTo(0, 0);
 
-  const dashboard = document.body;
+  // Capture the entire dashboard (just like index.html)
+  const captureTarget = document.body;
 
-  await html2canvas(dashboard, {
-    scale: 1.2,             // ⚙️ Lower scale = smaller image
-    useCORS: true,
-    backgroundColor: "#01414d"
-  }).then(canvas => {
-    const imgData = canvas.toDataURL("image/jpeg", 0.6); // ⚙️ Compress to JPEG (quality 60%)
+  await html2canvas(captureTarget, {
+    scale: 2.5,                 // High quality
+    useCORS: true,              // Allow cross-origin images
+    scrollX: 0,
+    scrollY: 0,
+    windowWidth: document.documentElement.scrollWidth,
+    windowHeight: document.documentElement.scrollHeight,
+    backgroundColor: "#01414d"  // Match dashboard background
+  })
+    .then(canvas => {
+      const imgData = canvas.toDataURL("image/jpeg", 1.0);
 
-    // 🧾 Landscape A4 page
-    const pdf = new jsPDF("l", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+      // Dynamically size PDF to match dashboard
+      const pdfWidth = canvas.width * 0.264583; // px → mm
+      const pdfHeight = canvas.height * 0.264583;
 
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      const pdf = new jsPDF({
+        orientation: pdfWidth > pdfHeight ? "l" : "p",
+        unit: "mm",
+        format: [pdfWidth, pdfHeight]
+      });
 
-    let y = 0;
-    pdf.addImage(imgData, "JPEG", 0, y, imgWidth, imgHeight);
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
 
-    // Add timestamp footer
-    pdf.setFontSize(10);
-    pdf.setTextColor(100);
-    const timestamp = new Date().toLocaleString();
-    pdf.text(`Generated on: ${timestamp}`, 10, pageHeight - 5);
-
-    pdf.save("WRM_Dashboard.pdf");
-  }).catch(err => {
-    alert("❌ Error generating PDF: " + err);
-  }).finally(() => {
-    btn.style.visibility = "visible";
-    tooltips.forEach(t => t.style.display = "");
-  });
+      // Auto file name
+      const now = new Date();
+      const fileName = `WRM_Dashboard_${String(now.getDate()).padStart(2,"0")}_${String(now.getMonth()+1).padStart(2,"0")}_${now.getFullYear()}.pdf`;
+      pdf.save(fileName);
+    })
+    .catch(err => {
+      console.error("PDF Generation Error:", err);
+      alert("⚠️ PDF generation failed. Try again.");
+    })
+    .finally(() => {
+      btn.style.visibility = "visible";
+      tooltips.forEach(t => (t.style.display = ""));
+    });
 });
 </script>
 
