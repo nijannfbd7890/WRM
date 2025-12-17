@@ -9,6 +9,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- For graphs -->
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script> <!-- For labels on bars -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script> <!-- For reading CSV files -->
+<!-- For PDF download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 
 <style>
   /* ==============================
@@ -98,19 +102,44 @@ header {
     box-shadow: 0 0 10px rgba(0,0,0,0.4);
   }
 
-  /* ==============================
-     FILTERS (Dropdowns)
-     ============================== */
-  .filters {
-    margin: 18px 0 5px;
-  }
-  select {
-    padding: 8px 14px;
-    margin: 0 6px;
-    border-radius: 8px;
-    border: none;
-    font-size: 1rem;
-  }
+   /* ==============================
+   FILTERS (Year & Month) — Styled Buttons Look
+   ============================== */
+.filters {
+  margin-top: 38px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.filters select {
+  background-color: #015871;
+  color: #ffd666;
+  font-weight: bold;
+  padding: 12px 24px;
+  border: 2px solid #00a8b5;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s ease;
+  text-align: center;
+  appearance: none; /* hides default arrow */
+}
+
+/* Hover and focus states */
+.filters select:hover {
+  background-color: #02798f;
+  border-color: #ffd666;
+  transform: scale(1.05);
+}
+.filters select:focus {
+  outline: none;
+  box-shadow: 0 0 8px #ffd666;
+}
+
+
 
   /* ==============================
      SUMMARY CARDS (Totals display)
@@ -188,7 +217,8 @@ header {
 <!-- HEADER SECTION -->
 <header>
   <div class="header-container">
-    <img src="LOGO.png" alt="Company Logo" class="logo-left" />
+    <!-- <img src="LOGO.png" alt="Company Logo" class="logo-left" /> -->
+	<img src="https://raw.githubusercontent.com/nijannfbd7890/WRM/main/LOGO.png" class="logo-left" crossorigin="anonymous" />
     <div class="header-title">
       <h1>
         Namma Family Builder and Developer Pvt. Ltd<br>
@@ -196,7 +226,8 @@ header {
         <span>Team - Marketing Management</span>
       </h1>
     </div>
-    <img src="cs.jpg" alt="Boss Photo" class="logo-right" />
+    <!-- <img src="cs.jpg" alt="Boss Photo" class="logo-right" /> -->
+	<img src="https://raw.githubusercontent.com/nijannfbd7890/WRM/main/cs.jpg" class="logo-right" crossorigin="anonymous" />
   </div>
 </header>
 
@@ -287,6 +318,21 @@ const TEAM_CANONICAL = {
   "latha mam": "Latha Mam & Ayyappan Sir",
   "ayyappan sir": "Latha Mam & Ayyappan Sir"
 };
+
+// ✅ Master list of live teams (even if no bookings in CSV)
+const MASTER_TEAMS = [
+  "Ranjith Sir",
+  "Suriya Sir & Selvakumar Sir",
+  "Latha Mam & Ayyappan Sir",
+  "Prabhakaran Sir",
+  "Ashok Sir",
+  "Rajiv Sir",
+  "Gopi Sir",
+  "Thangadurai Sir",
+  "Senthil Sir",
+  "Kumaresan Sir",   // 🔹 No booking this month
+  "Sankar Sir"       // 🔹 No booking this month
+];
 
 /* Function to convert names into Title Case */
 function titleCase(str) {
@@ -399,52 +445,66 @@ function updateDashboard(year,month,teamKey,rangeKey,dateKey){
     });
   }
 
-  /* Create an object to store results for each team */
-  const teams={};
-  filtered.forEach(r=>{
-    const team = normalizeTeamName(r[teamKey]);
-    const br   = (r[rangeKey] || "").toLowerCase();
+  
+/* Create an object to store results for each team */
+const teams = {};
+MASTER_TEAMS.forEach(t => {
+  const team = normalizeTeamName(t);
+  teams[team] = {
+    totalCount: 0,
+    totalSqft: 0,
+    below20:{count:0,sqft:0},
+    r20_30:{count:0,sqft:0},
+    r30_40:{count:0,sqft:0},
+    r40_70:{count:0,sqft:0},
+    above70:{count:0,sqft:0}
+  };
+});
 
-    /* Calculate total SQFT for each row */
-    let sqft = 0;
-    Object.keys(r).forEach(k=>{
-      if(k.toLowerCase().startsWith("actual total sq-ft")){
-        const raw=(r[k]+"").replace(/,/g,"").trim();
-        const v=parseFloat(raw);
-        if(!isNaN(v)) sqft+=v;
-      }
-    });
+/* Loop through filtered CSV rows */
+filtered.forEach(r => {
+  const team = normalizeTeamName(r[teamKey]);
+  const br = (r[rangeKey] || "").toLowerCase();
 
-    /* Initialize team object if not already present */
-    if(!teams[team]){
-      teams[team]={ totalCount:0,totalSqft:0,
-        below20:{count:0,sqft:0},
-        r20_30:{count:0,sqft:0},
-        r30_40:{count:0,sqft:0},
-        r40_70:{count:0,sqft:0},
-        above70:{count:0,sqft:0}
-      };
-    }
-
-    /* Increment counters and group into correct budget ranges */
-    const t = teams[team];
-    t.totalCount++; t.totalSqft+=sqft;
-
-    if(br.includes("below 20")){
-      t.below20.count++; t.below20.sqft+=sqft;
-    }else if(br.includes("20") && br.includes("30")){
-      t.r20_30.count++; t.r20_30.sqft+=sqft;
-    }else if(br.includes("30") && br.includes("40")){
-      t.r30_40.count++; t.r30_40.sqft+=sqft;
-    }else if(br.includes("40") && br.includes("70")){
-      t.r40_70.count++; t.r40_70.sqft+=sqft;
-    }else if(br.includes("above 70")){
-      t.above70.count++; t.above70.sqft+=sqft;
+  /* Calculate total SQFT for each row */
+  let sqft = 0;
+  Object.keys(r).forEach(k=>{
+    if(k.toLowerCase().startsWith("actual total sq-ft")){
+      const raw=(r[k]+"").replace(/,/g,"").trim();
+      const v=parseFloat(raw);
+      if(!isNaN(v)) sqft+=v;
     }
   });
 
+  const t = teams[team];
+  t.totalCount++;
+  t.totalSqft += sqft;
+
+  if(br.includes("below 20")){
+    t.below20.count++; t.below20.sqft+=sqft;
+  }else if(br.includes("20") && br.includes("30")){
+    t.r20_30.count++; t.r20_30.sqft+=sqft;
+  }else if(br.includes("30") && br.includes("40")){
+    t.r30_40.count++; t.r30_40.sqft+=sqft;
+  }else if(br.includes("40") && br.includes("70")){
+    t.r40_70.count++; t.r40_70.sqft+=sqft;
+  }else if(br.includes("above 70")){
+    t.above70.count++; t.above70.sqft+=sqft;
+  }
+});
+
+
   /* Sort teams by booking count (descending) */
-  const sorted=Object.entries(teams).sort((a,b)=>b[1].totalCount-a[1].totalCount);
+  //const sorted=Object.entries(teams).sort((a,b)=>b[1].totalCount-a[1].totalCount);
+  const sorted = Object.entries(teams).sort((a, b) => {
+  if (b[1].totalSqft === 0 && a[1].totalSqft === 0) {
+    return a[0].localeCompare(b[0]); // alphabetical for zero teams
+  }
+  if (b[1].totalSqft === 0) return -1;
+  if (a[1].totalSqft === 0) return 1;
+  return b[1].totalSqft - a[1].totalSqft;
+});
+
 
   /* Prepare table body and footer */
   const tbody=document.querySelector("#dataTable tbody");
@@ -474,11 +534,11 @@ function updateDashboard(year,month,teamKey,rangeKey,dateKey){
       <tr>
         <td>${team}</td>
         <td>${t.totalCount}</td><td>${Math.round(t.totalSqft)}</td>
-        <td>${t.below20.count}</td><td>${Math.round(t.below20.sqft)}</td><td>${pct(t.below20.count,t.totalCount)}</td>
-        <td>${t.r20_30.count}</td><td>${Math.round(t.r20_30.sqft)}</td><td>${pct(t.r20_30.count,t.totalCount)}</td>
-        <td>${t.r30_40.count}</td><td>${Math.round(t.r30_40.sqft)}</td><td>${pct(t.r30_40.count,t.totalCount)}</td>
-        <td>${t.r40_70.count}</td><td>${Math.round(t.r40_70.sqft)}</td><td>${pct(t.r40_70.count,t.totalCount)}</td>
-        <td>${t.above70.count}</td><td>${Math.round(t.above70.sqft)}</td><td>${pct(t.above70.count,t.totalCount)}</td>
+        <td>${t.below20.count}</td><td>${Math.round(t.below20.sqft)}</td><td>${pct(t.below20.sqft,t.totalSqft)}</td>
+        <td>${t.r20_30.count}</td><td>${Math.round(t.r20_30.sqft)}</td><td>${pct(t.r20_30.sqft,t.totalSqft)}</td>
+        <td>${t.r30_40.count}</td><td>${Math.round(t.r30_40.sqft)}</td><td>${pct(t.r30_40.sqft,t.totalSqft)}</td>
+        <td>${t.r40_70.count}</td><td>${Math.round(t.r40_70.sqft)}</td><td>${pct(t.r40_70.sqft,t.totalSqft)}</td>
+        <td>${t.above70.count}</td><td>${Math.round(t.above70.sqft)}</td><td>${pct(t.above70.sqft,t.totalSqft)}</td>
       </tr>
     `);
   });
@@ -488,11 +548,11 @@ function updateDashboard(year,month,teamKey,rangeKey,dateKey){
     <tr>
       <td>Grand Total</td>
       <td>${g.totalCount}</td><td>${Math.round(g.totalSqft)}</td>
-      <td>${g.below20.count}</td><td>${Math.round(g.below20.sqft)}</td><td>${pct(g.below20.count,g.totalCount)}</td>
-      <td>${g.r20_30.count}</td><td>${Math.round(g.r20_30.sqft)}</td><td>${pct(g.r20_30.count,g.totalCount)}</td>
-      <td>${g.r30_40.count}</td><td>${Math.round(g.r30_40.sqft)}</td><td>${pct(g.r30_40.count,g.totalCount)}</td>
-      <td>${g.r40_70.count}</td><td>${Math.round(g.r40_70.sqft)}</td><td>${pct(g.r40_70.count,g.totalCount)}</td>
-      <td>${g.above70.count}</td><td>${Math.round(g.above70.sqft)}</td><td>${pct(g.above70.count,g.totalCount)}</td>
+      <td>${g.below20.count}</td><td>${Math.round(g.below20.sqft)}</td><td>${pct(g.below20.sqft,g.totalSqft)}</td>
+      <td>${g.r20_30.count}</td><td>${Math.round(g.r20_30.sqft)}</td><td>${pct(g.r20_30.sqft,g.totalSqft)}</td>
+      <td>${g.r30_40.count}</td><td>${Math.round(g.r30_40.sqft)}</td><td>${pct(g.r30_40.sqft,g.totalSqft)}</td>
+      <td>${g.r40_70.count}</td><td>${Math.round(g.r40_70.sqft)}</td><td>${pct(g.r40_70.sqft,g.totalSqft)}</td>
+      <td>${g.above70.count}</td><td>${Math.round(g.above70.sqft)}</td><td>${pct(g.above70.sqft,g.totalSqft)}</td>
     </tr>
   `;
 
@@ -561,55 +621,58 @@ function renderChart(dataArr){
   });
 }
 </script>
+<!-- === PDF DOWNLOAD (Same logic as index.html) === -->
 <script>
 document.getElementById("downloadBtn").addEventListener("click", async () => {
   const { jsPDF } = window.jspdf;
-
   const btn = document.getElementById("downloadBtn");
   const tooltips = document.querySelectorAll(".boss-tooltip");
 
-  // Hide button + tooltips during screenshot
+  // Hide unnecessary UI before capture
   btn.style.visibility = "hidden";
-  tooltips.forEach(t => t.style.display = "none");
+  tooltips.forEach(t => (t.style.display = "none"));
+  window.scrollTo(0, 0);
 
-  // Capture the whole visible dashboard
-  const dashboard = document.body;
+  // Capture the entire dashboard (just like index.html)
+  const captureTarget = document.body;
 
-  await html2canvas(dashboard, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: "#01414d"
-  }).then(canvas => {
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+  await html2canvas(captureTarget, {
+    scale: 2.5,                 // High quality
+    useCORS: true,              // Allow cross-origin images
+    scrollX: 0,
+    scrollY: 0,
+    windowWidth: document.documentElement.scrollWidth,
+    windowHeight: document.documentElement.scrollHeight,
+    backgroundColor: "#01414d"  // Match dashboard background
+  })
+    .then(canvas => {
+      const imgData = canvas.toDataURL("image/jpeg", 1.0);
 
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      // Dynamically size PDF to match dashboard
+      const pdfWidth = canvas.width * 0.264583; // px → mm
+      const pdfHeight = canvas.height * 0.264583;
 
-    let y = 0;
-    pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+      const pdf = new jsPDF({
+        orientation: pdfWidth > pdfHeight ? "l" : "p",
+        unit: "mm",
+        format: [pdfWidth, pdfHeight]
+      });
 
-    // Add extra pages if content is long
-    if (imgHeight > pageHeight) {
-      let heightLeft = imgHeight - pageHeight;
-      while (heightLeft > 0) {
-        y = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-    }
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
 
-    pdf.save("WRM_Dashboard.pdf");
-  }).catch(err => {
-    alert("❌ Error generating PDF: " + err);
-  }).finally(() => {
-    // Restore visibility
-    btn.style.visibility = "visible";
-    tooltips.forEach(t => t.style.display = "");
-  });
+      // Auto file name
+      const now = new Date();
+      const fileName = `WRM_Budget_Range_Dashboard_${String(now.getDate()).padStart(2,"0")}_${String(now.getMonth()+1).padStart(2,"0")}_${now.getFullYear()}.pdf`;
+      pdf.save(fileName);
+    })
+    .catch(err => {
+      console.error("PDF Generation Error:", err);
+      alert("⚠️ PDF generation failed. Try again.");
+    })
+    .finally(() => {
+      btn.style.visibility = "visible";
+      tooltips.forEach(t => (t.style.display = ""));
+    });
 });
 </script>
 </body>

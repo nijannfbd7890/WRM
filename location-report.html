@@ -7,6 +7,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<!-- For PDF download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
  body {
@@ -52,7 +55,31 @@ header {
     font-size: 1.2rem;
     color: #ffd666;
   }
+/* ==============================
+   FILTERS (Year & Month) — Styled Buttons Look
+   ============================== */
+.filters {
+  margin-top: 38px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
 
+.filters select {
+  background-color: #015871;
+  color: #ffd666;
+  font-weight: bold;
+  padding: 12px 24px;
+  border: 2px solid #00a8b5;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s ease;
+  text-align: center;
+  appearance: none; /* hides default arrow */
+}
   /* NAV BAR */
   nav {
     display: flex;
@@ -85,43 +112,45 @@ header {
     box-shadow: 0 0 10px rgba(0,0,0,0.4);
   }
 
-  <!-- /* FILTERS + CARDS */ -->
-  <!-- .filters { -->
-    <!-- margin: 18px 0 5px; -->
-  <!-- } -->
-  <!-- select { -->
-    <!-- padding: 8px 14px; -->
-    <!-- margin: 0 6px; -->
-    <!-- border-radius: 8px; -->
-    <!-- border: none; -->
-    <!-- font-size: 1rem; -->
-  <!-- } -->
+/* ==============================
+   FILTERS (Year & Month Dropdowns)
+   ============================== */
+.filters {
+  margin-top: 38px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
 
-  <!-- .cards { -->
-    <!-- display: flex; -->
-    <!-- justify-content: center; -->
-    <!-- flex-wrap: wrap; -->
-    <!-- gap: 18px; -->
-    <!-- margin: 12px 15px 25px; -->
-  <!-- } -->
-  <!-- .card { -->
-    <!-- background: rgba(255,255,255,0.12); -->
-    <!-- border-radius: 18px; -->
-    <!-- padding: 20px 30px; -->
-    <!-- min-width: 220px; -->
-    <!-- box-shadow: 0 4px 14px rgba(0,0,0,0.35); -->
-  <!-- } -->
-  <!-- .card h2 { -->
-    <!-- margin: 0; -->
-    <!-- font-size: 2.3rem; -->
-    <!-- color: #ffd666; -->
-  <!-- } -->
-  <!-- .card p { -->
-    <!-- margin: 6px 0 0; -->
-    <!-- font-size: 1rem; -->
-    <!-- opacity: 0.9; -->
-  <!-- } -->
-   .summary-cards {
+.filters select {
+  background-color: #015871;
+  color: #ffd666;
+  font-weight: bold;
+  padding: 12px 24px;
+  border: 2px solid #00a8b5;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s ease;
+  text-align: center;
+  appearance: none; /* hide default arrow */
+}
+
+/* Hover and focus styles */
+.filters select:hover {
+  background-color: #02798f;
+  border-color: #ffd666;
+  transform: scale(1.05);
+}
+.filters select:focus {
+  outline: none;
+  box-shadow: 0 0 8px #ffd666;
+}
+	
+	
+ .summary-cards {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -202,20 +231,11 @@ header {
 </head>
 
 <body>
+<!-- HEADER SECTION -->
 <header>
   <div class="header-container">
     <!-- <img src="LOGO.png" alt="Company Logo" class="logo-left" /> -->
-	<div class="boss-container">
-	  <!-- <img src="LOGO.png" alt="Company Logo" class="logo-left" /> -->
-	  <!-- <img src="LOGO.png" alt="Company Logo" class="logo-left" crossorigin="anonymous" /> -->
-		  <img 
-	  src="https://raw.githubusercontent.com/nijannfbd7890/WRM/main/LOGO.png" 
-	  alt="Company Logo" 
-	  class="logo-left" 
-	  crossorigin="anonymous"
-	/>
-	  <span class="boss-tooltip">NFBD</span>
-	</div>
+	<img src="https://raw.githubusercontent.com/nijannfbd7890/WRM/main/LOGO.png" class="logo-left" crossorigin="anonymous" />
     <div class="header-title">
       <h1>
         Namma Family Builder and Developer Pvt. Ltd<br>
@@ -223,18 +243,8 @@ header {
         <span>Team - Marketing Management</span>
       </h1>
     </div>
-    <!-- Right Boss Image -->
-    <div class="boss-container">
-	  <!-- <img src="cs.jpg" alt="Boss Photo" class="logo-right" /> -->
-	  <!-- <img src="cs.jpg" alt="Boss Photo" class="logo-right" crossorigin="anonymous" /> -->
-	  <img 
-	  src="https://raw.githubusercontent.com/nijannfbd7890/WRM/main/cs.jpg" 
-	  alt="Boss Photo" 
-	  class="logo-right" 
-	  crossorigin="anonymous"
-	/>
-	  <span class="boss-tooltip">Mr.Ponnusamy Karthik Sir</span>
-	</div>
+    <!-- <img src="cs.jpg" alt="Boss Photo" class="logo-right" /> -->
+	<img src="https://raw.githubusercontent.com/nijannfbd7890/WRM/main/cs.jpg" class="logo-right" crossorigin="anonymous" />
   </div>
 </header>
 
@@ -318,7 +328,7 @@ header {
 </footer>
 
 <script>
-let allData = [], monthsByYear = {}, chartInstance = null;
+let allData = [], chartInstance = null;
 
 // ✅ Name Normalization for consistency
 const TEAM_CANONICAL = {
@@ -329,6 +339,21 @@ const TEAM_CANONICAL = {
   "latha mam": "Latha Mam & Ayyappan Sir",
   "ayyappan sir": "Latha Mam & Ayyappan Sir"
 };
+// ✅ Master team list (same as other reports)
+const MASTER_TEAMS = [
+  "Ranjith Sir",
+  "Suriya Sir & Selvakumar Sir",
+  "Latha Mam & Ayyappan Sir",
+  "Prabhakaran Sir",
+  "Ashok Sir",
+  "Rajiv Sir",
+  "Gopi Sir",
+  "Thangadurai Sir",
+  "Senthil Sir",
+  "Kumaresan Sir",
+  "Sankar Sir"
+];
+
 function titleCase(str){
   return str ? str.toLowerCase().replace(/\s*&\s*/g," & ")
   .split(" ").filter(Boolean)
@@ -345,105 +370,163 @@ Papa.parse("https://nijannfbd7890.github.io/WRM/workbook.csv", {
   complete: res => initDashboard(res.data)
 });
 
+// ✅ INIT DASHBOARD (no booking date logic)
 function initDashboard(data){
-  const norm=s=>s?s.trim().toLowerCase():"";
-  const f=data[0];
-  const teamKey=Object.keys(f).find(k=>norm(k)==="team name");
-  const locKey=Object.keys(f).find(k=>norm(k).includes("location"));
-  const sqftKeys=Object.keys(f).filter(k=>norm(k).startsWith("actual total sq-ft"));
-  const dateKey=Object.keys(f).find(k=>norm(k).includes("booking"));
-  if(!teamKey||!locKey||!sqftKeys.length||!dateKey){
-    alert("⚠ Missing required columns in CSV");
+  const norm = s => s ? s.trim().toLowerCase() : "";
+  const f = data[0];
+  console.log("CSV Headers:", Object.keys(f));
+  
+  // Clean and flexible header matching (handles spaces and minor text differences)
+	const teamKey = Object.keys(f).find(k => norm(k).replace(/\s+/g,'') === "teamname");
+	const locKey = Object.keys(f).find(k => norm(k).replace(/\s+/g,'') === "location");
+	const sqftKeys = Object.keys(f).filter(k => norm(k).replace(/\s+/g,'').includes("total"));
+	console.log("Detected Columns:", { teamKey, locKey, sqftKeys });
+
+
+
+  if(!teamKey || !locKey || !sqftKeys.length){
+    alert("⚠ Missing required columns (TEAM NAME / LOCATION / SQ-FT) in CSV");
     return;
   }
-  allData=data.filter(d=>d[teamKey]);
-  populateFilters(allData,dateKey);
-  updateDashboard("All","All",teamKey,locKey,sqftKeys,dateKey);
-  yearFilter.addEventListener("change",e=>{
-    updateMonthDropdown(e.target.value);
-    updateDashboard(e.target.value,monthFilter.value,teamKey,locKey,sqftKeys,dateKey);
+
+  allData = data.filter(d => d[teamKey]);
+  updateDashboard(teamKey, locKey, sqftKeys);
+  // 🔹 Find the first column that looks like a date
+// 🔹 Find the first column that looks like a date
+const dateKey = Object.keys(f).find(k => norm(k).includes("agreement date")) 
+             || Object.keys(f).find(k => norm(k).includes("booking date"))
+             || Object.keys(f).find(k => norm(k).includes("date"));
+console.log("Detected date column:", dateKey);
+
+// 🔹 Populate Year & Month dropdowns dynamically
+if (dateKey) {
+  const yearMap = new Map(); // { year: Set(monthNames) }
+
+  data.forEach(d => {
+    const val = (d[dateKey] || "").trim();
+    const match = val.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+    if (match) {
+      const day = parseInt(match[1]);
+      const monthNum = parseInt(match[2]);
+      const year = match[3].length === 2 ? `20${match[3]}` : match[3];
+      const monthName = new Date(2000, monthNum - 1).toLocaleString("en", { month: "short" });
+      const label = `${monthName}-${year.slice(-2)}`;
+      if (!yearMap.has(year)) yearMap.set(year, new Set());
+      yearMap.get(year).add(label);
+    }
   });
-  monthFilter.addEventListener("change",e=>{
-    updateDashboard(yearFilter.value,e.target.value,teamKey,locKey,sqftKeys,dateKey);
-  });
-}
 
-function populateFilters(data,dateKey){
-  const years=[]; monthsByYear={};
-  data.forEach(r=>{
-    const raw=(r[dateKey]||"").trim(); if(!raw)return;
-    const [d,m,y]=raw.split(/[-\/]/); if(!y)return;
-    const year=parseInt(y);
-    const mon=new Date(`${y}-${m}-01`).toLocaleString('en',{month:'short'})+"-"+y.slice(-2);
-    if(!years.includes(year))years.push(year);
-    if(!monthsByYear[year])monthsByYear[year]=[];
-    if(!monthsByYear[year].includes(mon))monthsByYear[year].push(mon);
-  });
-  years.sort((a,b)=>b-a);
-  const ys=document.getElementById("yearFilter");
-  ys.innerHTML='<option value="All">All Years</option>';
-  years.forEach(y=>ys.innerHTML+=`<option>${y}</option>`);
-  updateMonthDropdown("All");
-}
-function updateMonthDropdown(y){
-  const ms=document.getElementById("monthFilter");
-  ms.innerHTML='<option value="All">All Months</option>';
-  if(y!=="All"){
-    (monthsByYear[y]||[]).forEach(m=>ms.innerHTML+=`<option>${m}</option>`);
-  } else {
-    [...new Set(Object.values(monthsByYear).flat())].forEach(m=>ms.innerHTML+=`<option>${m}</option>`);
-  }
-}
+  const yearSelect = document.getElementById("yearFilter");
+  const monthSelect = document.getElementById("monthFilter");
 
-function updateDashboard(year,month,teamKey,locKey,sqftKeys,dateKey){
-  let filtered=allData.filter(r=>r[dateKey]);
-  if(year!=="All"||month!=="All"){
-    filtered=filtered.filter(r=>{
-      const raw=(r[dateKey]||"").trim(); const [d,m,y]=raw.split(/[-\/]/);
-      if(!y)return false;
-      const rowYear=parseInt(y);
-      const rowMonth=new Date(`${y}-${m}-01`).toLocaleString('en',{month:'short'})+"-"+y.slice(-2);
-      if(year!=="All"&&rowYear!=year)return false;
-      if(month!=="All"&&rowMonth.toLowerCase()!=month.toLowerCase())return false;
-      return true;
-    });
-  }
+  // 🔹 Sort years (current first, then descending)
+  const years = [...yearMap.keys()].sort((a,b) => b - a);
+  const currentYear = new Date().getFullYear().toString();
+  if (!years.includes(currentYear)) years.unshift(currentYear);
 
-  const teams={};
-  filtered.forEach(r=>{
-    const team=normalizeTeamName(r[teamKey]);
-    const loc=(r[locKey]||"").toLowerCase();
-    let sqft=0;
-    sqftKeys.forEach(k=>{
-      const v=parseFloat((r[k]||"0").replace(/,/g,""))||0;
-      sqft+=v;
-    });
+  yearSelect.innerHTML = `<option value="All">All Years</option>` +
+    years.map(y => `<option value="${y}">${y}</option>`).join("");
 
-    if(!teams[team]){
-      teams[team]={totalCount:0,totalSqft:0,
-        gst:{count:0,sqft:0},
-        nellikuppam:{count:0,sqft:0},
-        omr:{count:0,sqft:0},
-        ecr:{count:0,sqft:0}
-      };
+  // 🔹 Populate months based on selected year
+  function updateMonthDropdown(selectedYear) {
+    const monthOrder = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    let months = new Set();
+
+    if (selectedYear === "All") {
+      // combine all years' months
+      yearMap.forEach(set => set.forEach(m => months.add(m)));
+    } else if (yearMap.has(selectedYear)) {
+      months = yearMap.get(selectedYear);
     }
 
-    const t=teams[team];
-    t.totalCount++; t.totalSqft+=sqft;
+    const sortedMonths = [...months].sort((a,b) =>
+      monthOrder.indexOf(a.slice(0,3)) - monthOrder.indexOf(b.slice(0,3))
+    );
 
-    if(loc.includes("gst")) t.gst.count++, t.gst.sqft+=sqft;
-    else if(loc.includes("nellikuppam")) t.nellikuppam.count++, t.nellikuppam.sqft+=sqft;
-    else if(loc.includes("omr")) t.omr.count++, t.omr.sqft+=sqft;
-    else if(loc.includes("ecr")) t.ecr.count++, t.ecr.sqft+=sqft;
+    monthSelect.innerHTML = `<option value="All">All Months</option>` +
+      sortedMonths.map(m => `<option value="${m}">${m}</option>`).join("");
+  }
+
+  // Initial populate
+  updateMonthDropdown("All");
+
+  // 🔹 Event listeners for filtering
+  yearSelect.addEventListener("change", () => {
+    const selectedYear = yearSelect.value;
+    updateMonthDropdown(selectedYear);
+    filterByDate(selectedYear, monthSelect.value, dateKey, teamKey, locKey, sqftKeys);
   });
 
-  const sorted=Object.entries(teams).sort((a,b)=>b[1].totalCount-a[1].totalCount);
-  const tbody=document.querySelector("#dataTable tbody");
-  const tfoot=document.querySelector("#dataTable tfoot");
-  tbody.innerHTML=""; tfoot.innerHTML="";
+  monthSelect.addEventListener("change", () => {
+    filterByDate(yearSelect.value, monthSelect.value, dateKey, teamKey, locKey, sqftKeys);
+  });
+}
 
-  let g={totalCount:0,totalSqft:0,gst:{count:0,sqft:0},nellikuppam:{count:0,sqft:0},omr:{count:0,sqft:0},ecr:{count:0,sqft:0}};
-  const pct=(p,t)=>t?Math.round((p/t)*100)+"%":"0%";
+
+
+  // Hide filters since no year/month
+  <!-- document.getElementById("yearFilter").style.display = "none"; -->
+  <!-- document.getElementById("monthFilter").style.display = "none"; -->
+}
+
+// ✅ UPDATE DASHBOARD
+function updateDashboard(teamKey, locKey, sqftKeys){
+  // ✅ Initialize all teams first (same pattern as Advance Range)
+const teams = {};
+MASTER_TEAMS.forEach(t => {
+  const team = normalizeTeamName(t);
+  teams[team] = {
+    totalCount:0, totalSqft:0,
+    gst:{count:0,sqft:0},
+    nellikuppam:{count:0,sqft:0},
+    omr:{count:0,sqft:0},
+    ecr:{count:0,sqft:0}
+  };
+});
+
+allData.forEach(r=>{
+
+    const team = normalizeTeamName(r[teamKey]);
+    const locText = (r[locKey] || "").toLowerCase().trim();
+    let sqft = 0;
+    sqftKeys.forEach(k=>{
+      const v = parseFloat((r[k]||"0").replace(/,/g,""))||0;
+      sqft += v;
+    });
+
+    
+
+    const t = teams[team];
+    t.totalCount++;
+    t.totalSqft += sqft;
+
+    if(locText.includes("gst")) {
+      t.gst.count++; t.gst.sqft += sqft;
+    } else if(locText.includes("nellik") || locText.includes("nellikuppam")) {
+      t.nellikuppam.count++; t.nellikuppam.sqft += sqft;
+    } else if(locText.includes("omr")) {
+      t.omr.count++; t.omr.sqft += sqft;
+    } else if(locText.includes("ecr")) {
+      t.ecr.count++; t.ecr.sqft += sqft;
+    }
+  });
+
+  const sorted = Object.entries(teams).sort((a, b) => {
+  if (b[1].totalSqft === 0 && a[1].totalSqft === 0)
+    return a[0].localeCompare(b[0]);
+  if (b[1].totalSqft === 0) return -1;
+  if (a[1].totalSqft === 0) return 1;
+  return b[1].totalSqft - a[1].totalSqft;
+});
+
+  const tbody = document.querySelector("#dataTable tbody");
+  const tfoot = document.querySelector("#dataTable tfoot");
+  tbody.innerHTML = ""; tfoot.innerHTML = "";
+
+  let g = {totalCount:0,totalSqft:0,gst:{count:0,sqft:0},nellikuppam:{count:0,sqft:0},omr:{count:0,sqft:0},ecr:{count:0,sqft:0}};
+  const pct = (rangeSqft, totalSqft) =>
+  totalSqft ? Math.round((rangeSqft / totalSqft) * 100) + "%" : "0%";
+
 
   sorted.forEach(([team,t])=>{
     g.totalCount+=t.totalCount; g.totalSqft+=t.totalSqft;
@@ -456,40 +539,71 @@ function updateDashboard(year,month,teamKey,locKey,sqftKeys,dateKey){
       <tr>
         <td>${team}</td>
         <td>${t.totalCount}</td><td>${Math.round(t.totalSqft)}</td>
-        <td>${t.gst.count}</td><td>${Math.round(t.gst.sqft)}</td><td>${pct(t.gst.count,t.totalCount)}</td>
-        <td>${t.nellikuppam.count}</td><td>${Math.round(t.nellikuppam.sqft)}</td><td>${pct(t.nellikuppam.count,t.totalCount)}</td>
-        <td>${t.omr.count}</td><td>${Math.round(t.omr.sqft)}</td><td>${pct(t.omr.count,t.totalCount)}</td>
-        <td>${t.ecr.count}</td><td>${Math.round(t.ecr.sqft)}</td><td>${pct(t.ecr.count,t.totalCount)}</td>
+        <td>${t.gst.count}</td><td>${Math.round(t.gst.sqft)}</td><td>${pct(t.gst.sqft,t.totalSqft)}</td>
+        <td>${t.nellikuppam.count}</td><td>${Math.round(t.nellikuppam.sqft)}</td><td>${pct(t.nellikuppam.sqft,t.totalSqft)}</td>
+        <td>${t.omr.count}</td><td>${Math.round(t.omr.sqft)}</td><td>${pct(t.omr.sqft,t.totalSqft)}</td>
+        <td>${t.ecr.count}</td><td>${Math.round(t.ecr.sqft)}</td><td>${pct(t.ecr.sqft,t.totalSqft)}</td>
       </tr>
     `);
   });
 
-  tfoot.innerHTML=`
+  // ✅ Grand Total Row
+  tfoot.innerHTML = `
     <tr>
       <td>Grand Total</td>
       <td>${g.totalCount}</td><td>${Math.round(g.totalSqft)}</td>
-      <td>${g.gst.count}</td><td>${Math.round(g.gst.sqft)}</td><td>${pct(g.gst.count,g.totalCount)}</td>
-      <td>${g.nellikuppam.count}</td><td>${Math.round(g.nellikuppam.sqft)}</td><td>${pct(g.nellikuppam.count,g.totalCount)}</td>
-      <td>${g.omr.count}</td><td>${Math.round(g.omr.sqft)}</td><td>${pct(g.omr.count,g.totalCount)}</td>
-      <td>${g.ecr.count}</td><td>${Math.round(g.ecr.sqft)}</td><td>${pct(g.ecr.count,g.totalCount)}</td>
+      <td>${g.gst.count}</td><td>${Math.round(g.gst.sqft)}</td><td>${pct(g.gst.sqft,g.totalSqft)}</td>
+      <td>${g.nellikuppam.count}</td><td>${Math.round(g.nellikuppam.sqft)}</td><td>${pct(g.nellikuppam.sqft,g.totalSqft)}</td>
+      <td>${g.omr.count}</td><td>${Math.round(g.omr.sqft)}</td><td>${pct(g.omr.sqft,g.totalSqft)}</td>
+      <td>${g.ecr.count}</td><td>${Math.round(g.ecr.sqft)}</td><td>${pct(g.ecr.sqft,g.totalSqft)}</td>
     </tr>
   `;
-  // ✅ Update KPI cards
-	document.getElementById("totalBookings").textContent = g.totalCount;
-	document.getElementById("totalSqft").textContent = Math.round(g.totalSqft);
-	document.getElementById("selectedYear").textContent = year;
-	document.getElementById("selectedMonth").textContent = month;
+
+  // ✅ Update Summary Cards
+  document.getElementById("totalBookings").textContent = g.totalCount;
+  document.getElementById("totalSqft").textContent = Math.round(g.totalSqft);
+  document.getElementById("selectedYear").textContent = "All";
+  document.getElementById("selectedMonth").textContent = "All";
 
   renderChart(sorted);
 }
+function filterByDate(year, month, dateKey, teamKey, locKey, sqftKeys) {
+  let filtered = allData;
 
+  if (year !== "All" || month !== "All") {
+    filtered = allData.filter(d => {
+      const dateStr = (d[dateKey] || "").trim();
+      if (!dateStr) return false;
+      const m = dateStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+      if (!m) return false;
+      const monthNum = parseInt(m[2]);
+      const yr = m[3].length === 2 ? `20${m[3]}` : m[3];
+      const monthName = new Date(2000, monthNum - 1).toLocaleString("en", { month: "short" });
+      const monthLabel = `${monthName}-${yr.slice(-2)}`;
+
+      if (year !== "All" && yr !== year) return false;
+      if (month !== "All" && monthLabel.toLowerCase() !== month.toLowerCase()) return false;
+      return true;
+    });
+  }
+
+  // ✅ Update dashboard with filtered data
+  allData = filtered;
+  updateDashboard(teamKey, locKey, sqftKeys);
+}
+
+
+
+// ✅ CHART RENDERING
 function renderChart(dataArr){
   const ctx=document.getElementById("bookingsChart").getContext("2d");
-  if(chartInstance)chartInstance.destroy();
-  if(!dataArr.length)return;
-  const labels=dataArr.map(([t])=>t);
-  const counts=dataArr.map(([_,v])=>v.totalCount);
-  chartInstance=new Chart(ctx,{
+  if(chartInstance) chartInstance.destroy();
+  if(!dataArr.length) return;
+
+  const labels = dataArr.map(([t])=>t);
+  const counts = dataArr.map(([_,v])=>v.totalCount);
+
+  chartInstance = new Chart(ctx,{
     type:"bar",plugins:[ChartDataLabels],
     data:{labels,datasets:[{label:"Bookings",data:counts,
       backgroundColor:(ctx)=>{const c=ctx.chart.ctx,area=ctx.chart.chartArea;if(!area)return"#00cc99";
@@ -505,55 +619,60 @@ function renderChart(dataArr){
   });
 }
 </script>
+
+
+<!-- === PDF DOWNLOAD (Same logic as index.html) === -->
 <script>
 document.getElementById("downloadBtn").addEventListener("click", async () => {
   const { jsPDF } = window.jspdf;
-
   const btn = document.getElementById("downloadBtn");
   const tooltips = document.querySelectorAll(".boss-tooltip");
 
-  // Hide button + tooltips during screenshot
+  // Hide unnecessary UI before capture
   btn.style.visibility = "hidden";
-  tooltips.forEach(t => t.style.display = "none");
+  tooltips.forEach(t => (t.style.display = "none"));
+  window.scrollTo(0, 0);
 
-  // Capture the whole visible dashboard
-  const dashboard = document.body;
+  // Capture the entire dashboard (just like index.html)
+  const captureTarget = document.body;
 
-  await html2canvas(dashboard, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: "#01414d"
-  }).then(canvas => {
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+  await html2canvas(captureTarget, {
+    scale: 2.5,                 // High quality
+    useCORS: true,              // Allow cross-origin images
+    scrollX: 0,
+    scrollY: 0,
+    windowWidth: document.documentElement.scrollWidth,
+    windowHeight: document.documentElement.scrollHeight,
+    backgroundColor: "#01414d"  // Match dashboard background
+  })
+    .then(canvas => {
+      const imgData = canvas.toDataURL("image/jpeg", 1.0);
 
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      // Dynamically size PDF to match dashboard
+      const pdfWidth = canvas.width * 0.264583; // px → mm
+      const pdfHeight = canvas.height * 0.264583;
 
-    let y = 0;
-    pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+      const pdf = new jsPDF({
+        orientation: pdfWidth > pdfHeight ? "l" : "p",
+        unit: "mm",
+        format: [pdfWidth, pdfHeight]
+      });
 
-    // Add extra pages if content is long
-    if (imgHeight > pageHeight) {
-      let heightLeft = imgHeight - pageHeight;
-      while (heightLeft > 0) {
-        y = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-    }
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
 
-    pdf.save("WRM_Dashboard.pdf");
-  }).catch(err => {
-    alert("❌ Error generating PDF: " + err);
-  }).finally(() => {
-    // Restore visibility
-    btn.style.visibility = "visible";
-    tooltips.forEach(t => t.style.display = "");
-  });
+      // Auto file name
+      const now = new Date();
+      const fileName = `WRM_Location_Dashboard_${String(now.getDate()).padStart(2,"0")}_${String(now.getMonth()+1).padStart(2,"0")}_${now.getFullYear()}.pdf`;
+      pdf.save(fileName);
+    })
+    .catch(err => {
+      console.error("PDF Generation Error:", err);
+      alert("⚠️ PDF generation failed. Try again.");
+    })
+    .finally(() => {
+      btn.style.visibility = "visible";
+      tooltips.forEach(t => (t.style.display = ""));
+    });
 });
 </script>
 </body>

@@ -414,12 +414,14 @@ header {
       <th rowspan="2">Team Name</th>
       <th colspan="2">Overall</th>
       <th colspan="3">Below 5K</th>
-      <th colspan="3">5K - 10K</th>
-      <th colspan="3">10K - 25K</th>
-      <th colspan="3">Above 25K</th>
+      <th colspan="3">5-10K</th>
+      <th colspan="3">10-25K</th>
+      <th colspan="3">25-50K</th>
+      <th colspan="3">Above 50K</th>
     </tr>
     <tr>
       <th>Count</th><th>Sq Ft</th>
+      <th>Count</th><th>Sq Ft</th><th>%</th>
       <th>Count</th><th>Sq Ft</th><th>%</th>
       <th>Count</th><th>Sq Ft</th><th>%</th>
       <th>Count</th><th>Sq Ft</th><th>%</th>
@@ -464,6 +466,21 @@ const TEAM_CANONICAL = {
   "latha mam": "Latha Mam & Ayyappan Sir",
   "ayyappan sir": "Latha Mam & Ayyappan Sir"
 };
+// ✅ Master list of live teams (even if no bookings in CSV)
+const MASTER_TEAMS = [
+  "Ranjith Sir",
+  "Suriya Sir & Selvakumar Sir",
+  "Latha Mam & Ayyappan Sir",
+  "Prabhakaran Sir",
+  "Ashok Sir",
+  "Rajiv Sir",
+  "Gopi Sir",
+  "Thangadurai Sir",
+  "Senthil Sir",
+  "Kumaresan Sir",   // 🔹 No booking this month
+  "Sankar Sir"       // 🔹 No booking this month
+];
+
 
 function titleCase(str) {
   if (!str) return "";
@@ -551,8 +568,10 @@ function updateMonthDropdown(selectedYear){
   }
 }
 
+
 function updateDashboard(year,month,teamKey,advKey,dateKey){
-  let filtered = allData.filter(r=>r[dateKey]);
+  //let filtered = allData.filter(r=>r[dateKey]);
+  window.filtered = allData.filter(r=>r[dateKey]);
   if(year!=="All" || month!=="All"){
     filtered = filtered.filter(r=>{
       const raw=(r[dateKey]||"").trim();
@@ -565,47 +584,70 @@ function updateDashboard(year,month,teamKey,advKey,dateKey){
       return true;
     });
   }
+  // ✅ Get ALL unique teams from full data (even zero booking teams)
+const allTeams = MASTER_TEAMS.map(t => normalizeTeamName(t));
 
-  const teams={};
-  filtered.forEach(r=>{
-    const team = normalizeTeamName(r[teamKey]);
-    const adv  = (r[advKey] || "").toLowerCase();
 
-    // Sum all "Actual TOTAL SQ-FT..." cols
-    let sqft = 0;
-    Object.keys(r).forEach(k=>{
-      if(k.toLowerCase().startsWith("actual total sq-ft")){
-        const raw = (r[k] + "").replace(/,/g,"").trim();
-        const v = parseFloat(raw);
-        if(!isNaN(v)) sqft += v;
-      }
-    });
 
-    if(!teams[team]){
-      teams[team] = {
-        totalCount:0,totalSqft:0,
-        below5k:{count:0,sqft:0},
-        fiveToTen:{count:0,sqft:0},
-        tenToTwentyFive:{count:0,sqft:0},
-        aboveTwentyFive:{count:0,sqft:0}
-      };
-    }
-    const t = teams[team];
-    t.totalCount++;
-    t.totalSqft += sqft;
+  //const teams={};
+  // ✅ Initialize all teams with zero values
+const teams = {};
+allTeams.forEach(team => {
+  teams[team] = {
+    totalCount: 0,
+    totalSqft: 0,
+    below5k: { count: 0, sqft: 0 },
+    fiveToTen: { count: 0, sqft: 0 },
+    tenToTwentyFive: { count: 0, sqft: 0 },
+    twentyFiveToFifty: { count: 0, sqft: 0 },
+    aboveFifty: { count: 0, sqft: 0 }
+  };
+});
 
-    if(adv.includes("below 5k")){
-      t.below5k.count++; t.below5k.sqft += sqft;
-    }else if(adv.includes("5k") && adv.includes("10k")){
-      t.fiveToTen.count++; t.fiveToTen.sqft += sqft;
-    }else if(adv.includes("10") && adv.includes("25")){
-      t.tenToTwentyFive.count++; t.tenToTwentyFive.sqft += sqft;
-    }else if(adv.includes("above 25")){
-      t.aboveTwentyFive.count++; t.aboveTwentyFive.sqft += sqft;
+  
+  filtered.forEach(r => {
+  const team = normalizeTeamName(r[teamKey]);
+  const adv  = (r[advKey] || "").toLowerCase();
+
+  let sqft = 0;
+  Object.keys(r).forEach(k => {
+    if (k.toLowerCase().startsWith("actual total sq-ft")) {
+      const v = parseFloat((r[k] + "").replace(/,/g, ""));
+      if (!isNaN(v)) sqft += v;
     }
   });
 
-  const sorted = Object.entries(teams).sort((a,b)=>b[1].totalCount-a[1].totalCount);
+  const t = teams[team]; // ✅ team already exists
+
+  t.totalCount++;
+  t.totalSqft += sqft;
+
+  if (adv.includes("below 5k")) {
+    t.below5k.count++; t.below5k.sqft += sqft;
+  } else if (adv.includes("5k") && adv.includes("10k")) {
+    t.fiveToTen.count++; t.fiveToTen.sqft += sqft;
+  } else if (adv.includes("10") && adv.includes("25")) {
+    t.tenToTwentyFive.count++; t.tenToTwentyFive.sqft += sqft;
+  } else if (
+    (adv.includes("25") && adv.includes("50")) || adv.includes("25-50")
+  ) {
+    t.twentyFiveToFifty.count++; t.twentyFiveToFifty.sqft += sqft;
+  } else if (adv.includes("above 50") || adv.includes(">50")) {
+    t.aboveFifty.count++; t.aboveFifty.sqft += sqft;
+  }
+});
+
+
+	const sorted = Object.entries(teams).sort((a, b) => {
+  if (b[1].totalSqft === 0 && a[1].totalSqft === 0) {
+    return a[0].localeCompare(b[0]); // alphabetical for zero teams
+  }
+  if (b[1].totalSqft === 0) return -1;
+  if (a[1].totalSqft === 0) return 1;
+  return b[1].totalSqft - a[1].totalSqft;
+});
+
+
 
   const tbody=document.querySelector("#dataTable tbody");
   const tfoot=document.querySelector("#dataTable tfoot");
@@ -616,9 +658,14 @@ function updateDashboard(year,month,teamKey,advKey,dateKey){
     below5k:{count:0,sqft:0},
     fiveToTen:{count:0,sqft:0},
     tenToTwentyFive:{count:0,sqft:0},
-    aboveTwentyFive:{count:0,sqft:0}
+    twentyFiveToFifty:{count:0,sqft:0},
+	aboveFifty:{count:0,sqft:0}
+
   };
-  const pct=(p,t)=> t ? Math.round((p/t)*100)+"%" : "0%";
+  //const pct=(p,t)=> t ? Math.round((p/t)*100)+"%" : "0%";
+  const pct = (rangeSqft, totalSqft) =>
+  totalSqft ? Math.round((rangeSqft / totalSqft) * 100) + "%" : "0%";
+
 
   sorted.forEach(([team,t])=>{
     g.totalCount += t.totalCount;
@@ -626,28 +673,32 @@ function updateDashboard(year,month,teamKey,advKey,dateKey){
     g.below5k.count += t.below5k.count; g.below5k.sqft += t.below5k.sqft;
     g.fiveToTen.count += t.fiveToTen.count; g.fiveToTen.sqft += t.fiveToTen.sqft;
     g.tenToTwentyFive.count += t.tenToTwentyFive.count; g.tenToTwentyFive.sqft += t.tenToTwentyFive.sqft;
-    g.aboveTwentyFive.count += t.aboveTwentyFive.count; g.aboveTwentyFive.sqft += t.aboveTwentyFive.sqft;
+    g.twentyFiveToFifty.count += t.twentyFiveToFifty.count;g.twentyFiveToFifty.sqft  += t.twentyFiveToFifty.sqft;g.aboveFifty.count += t.aboveFifty.count;g.aboveFifty.sqft  += t.aboveFifty.sqft;
 
     tbody.insertAdjacentHTML("beforeend",`
       <tr>
         <td>${team}</td>
         <td>${t.totalCount}</td><td>${Math.round(t.totalSqft)}</td>
-        <td>${t.below5k.count}</td><td>${Math.round(t.below5k.sqft)}</td><td>${pct(t.below5k.count,t.totalCount)}</td>
-        <td>${t.fiveToTen.count}</td><td>${Math.round(t.fiveToTen.sqft)}</td><td>${pct(t.fiveToTen.count,t.totalCount)}</td>
-        <td>${t.tenToTwentyFive.count}</td><td>${Math.round(t.tenToTwentyFive.sqft)}</td><td>${pct(t.tenToTwentyFive.count,t.totalCount)}</td>
-        <td>${t.aboveTwentyFive.count}</td><td>${Math.round(t.aboveTwentyFive.sqft)}</td><td>${pct(t.aboveTwentyFive.count,t.totalCount)}</td>
+        <td>${t.below5k.count}</td><td>${Math.round(t.below5k.sqft)}</td><td>${pct(t.below5k.sqft, t.totalSqft)}</td>
+        <td>${t.fiveToTen.count}</td><td>${Math.round(t.fiveToTen.sqft)}</td><td>${pct(t.fiveToTen.sqft, t.totalSqft)}</td>
+        <td>${t.tenToTwentyFive.count}</td><td>${Math.round(t.tenToTwentyFive.sqft)}</td><td>${pct(t.tenToTwentyFive.sqft, t.totalSqft)}</td>
+        <td>${t.twentyFiveToFifty.count}</td><td>${Math.round(t.twentyFiveToFifty.sqft)}</td><td>${pct(t.twentyFiveToFifty.sqft, t.totalSqft)}</td>
+		<td>${t.aboveFifty.count}</td><td>${Math.round(t.aboveFifty.sqft)}</td><td>${pct(t.aboveFifty.sqft, t.totalSqft)}</td>
+
       </tr>
     `);
+	
   });
 
   tfoot.innerHTML = `
     <tr>
       <td>Grand Total</td>
       <td>${g.totalCount}</td><td>${Math.round(g.totalSqft)}</td>
-      <td>${g.below5k.count}</td><td>${Math.round(g.below5k.sqft)}</td><td>${pct(g.below5k.count,g.totalCount)}</td>
-      <td>${g.fiveToTen.count}</td><td>${Math.round(g.fiveToTen.sqft)}</td><td>${pct(g.fiveToTen.count,g.totalCount)}</td>
-      <td>${g.tenToTwentyFive.count}</td><td>${Math.round(g.tenToTwentyFive.sqft)}</td><td>${pct(g.tenToTwentyFive.count,g.totalCount)}</td>
-      <td>${g.aboveTwentyFive.count}</td><td>${Math.round(g.aboveTwentyFive.sqft)}</td><td>${pct(g.aboveTwentyFive.count,g.totalCount)}</td>
+      <td>${g.below5k.count}</td><td>${Math.round(g.below5k.sqft)}</td><td>${pct(g.below5k.sqft, g.totalSqft)}</td>
+      <td>${g.fiveToTen.count}</td><td>${Math.round(g.fiveToTen.sqft)}</td><td>${pct(g.fiveToTen.sqft, g.totalSqft)}</td>
+      <td>${g.tenToTwentyFive.count}</td><td>${Math.round(g.tenToTwentyFive.sqft)}</td><td>${pct(g.tenToTwentyFive.sqft, g.totalSqft)}</td>
+      <td>${g.twentyFiveToFifty.count}</td><td>${Math.round(g.twentyFiveToFifty.sqft)}</td><td>${pct(g.twentyFiveToFifty.sqft, g.totalSqft)}</td>
+	  <td>${g.aboveFifty.count}</td><td>${Math.round(g.aboveFifty.sqft)}</td><td>${pct(g.aboveFifty.sqft, g.totalSqft)}</td>
     </tr>
   `;
 

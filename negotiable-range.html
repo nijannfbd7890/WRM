@@ -7,7 +7,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
+<!-- For PDF download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
  body {
     background: linear-gradient(135deg, #015871, #01414d);
@@ -53,6 +55,44 @@ header {
     color: #ffd666;
   }
 
+/* ==============================
+   FILTERS (Year & Month Dropdowns)
+   ============================== */
+.filters {
+  margin-top: 38px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.filters select {
+  background-color: #015871;
+  color: #ffd666;
+  font-weight: bold;
+  padding: 12px 24px;
+  border: 2px solid #00a8b5;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s ease;
+  text-align: center;
+  appearance: none; /* hide default arrow */
+}
+
+/* Hover and focus styles */
+.filters select:hover {
+  background-color: #02798f;
+  border-color: #ffd666;
+  transform: scale(1.05);
+}
+.filters select:focus {
+  outline: none;
+  box-shadow: 0 0 8px #ffd666;
+}
+
+
   /* NAV BAR */
   nav {
     display: flex;
@@ -85,43 +125,6 @@ header {
     box-shadow: 0 0 10px rgba(0,0,0,0.4);
   }
 
-  <!-- /* FILTERS + CARDS */ -->
-  <!-- .filters { -->
-    <!-- margin: 18px 0 5px; -->
-  <!-- } -->
-  <!-- select { -->
-    <!-- padding: 8px 14px; -->
-    <!-- margin: 0 6px; -->
-    <!-- border-radius: 8px; -->
-    <!-- border: none; -->
-    <!-- font-size: 1rem; -->
-  <!-- } -->
-
-  <!-- .cards { -->
-    <!-- display: flex; -->
-    <!-- justify-content: center; -->
-    <!-- flex-wrap: wrap; -->
-    <!-- gap: 18px; -->
-    <!-- margin: 12px 15px 25px; -->
-  <!-- } -->
-  <!-- .card { -->
-    <!-- background: rgba(255,255,255,0.12); -->
-    <!-- border-radius: 18px; -->
-    <!-- padding: 20px 30px; -->
-    <!-- min-width: 220px; -->
-    <!-- box-shadow: 0 4px 14px rgba(0,0,0,0.35); -->
-  <!-- } -->
-  <!-- .card h2 { -->
-    <!-- margin: 0; -->
-    <!-- font-size: 2.3rem; -->
-    <!-- color: #ffd666; -->
-  <!-- } -->
-  <!-- .card p { -->
-    <!-- margin: 6px 0 0; -->
-    <!-- font-size: 1rem; -->
-    <!-- opacity: 0.9; -->
-  <!-- } -->
-  
   .summary-cards {
   display: flex;
   justify-content: center;
@@ -204,9 +207,11 @@ header {
 </head>
 
 <body>
+<!-- HEADER SECTION -->
 <header>
   <div class="header-container">
-    <img src="LOGO.png" alt="Company Logo" class="logo-left" />
+    <!-- <img src="LOGO.png" alt="Company Logo" class="logo-left" /> -->
+	<img src="https://raw.githubusercontent.com/nijannfbd7890/WRM/main/LOGO.png" class="logo-left" crossorigin="anonymous" />
     <div class="header-title">
       <h1>
         Namma Family Builder and Developer Pvt. Ltd<br>
@@ -214,7 +219,8 @@ header {
         <span>Team - Marketing Management</span>
       </h1>
     </div>
-    <img src="cs.jpg" alt="Boss Photo" class="logo-right" />
+    <!-- <img src="cs.jpg" alt="Boss Photo" class="logo-right" /> -->
+	<img src="https://raw.githubusercontent.com/nijannfbd7890/WRM/main/cs.jpg" class="logo-right" crossorigin="anonymous" />
   </div>
 </header>
 
@@ -312,6 +318,21 @@ const TEAM_CANONICAL = {
   "latha mam": "Latha Mam & Ayyappan Sir",
   "ayyappan sir": "Latha Mam & Ayyappan Sir"
 };
+// ✅ Master list of live teams (same as other reports)
+const MASTER_TEAMS = [
+  "Ranjith Sir",
+  "Suriya Sir & Selvakumar Sir",
+  "Latha Mam & Ayyappan Sir",
+  "Prabhakaran Sir",
+  "Ashok Sir",
+  "Rajiv Sir",
+  "Gopi Sir",
+  "Thangadurai Sir",
+  "Senthil Sir",
+  "Kumaresan Sir",
+  "Sankar Sir"
+];
+
 function titleCase(str){
   return str ? str.toLowerCase().replace(/\s*&\s*/g," & ")
   .split(" ").filter(Boolean)
@@ -409,8 +430,23 @@ function updateDashboard(year,month,teamKey,negoKey,sqftKeys,dateKey){
     });
   }
 
-  const teams={};
-  filtered.forEach(r=>{
+  // ✅ Initialize all teams first (same as Advance Range)
+const teams = {};
+MASTER_TEAMS.forEach(t => {
+  const team = normalizeTeamName(t);
+  teams[team] = {
+    totalCount:0,totalSqft:0,
+    range0_100:{count:0,sqft:0},
+    range100_150:{count:0,sqft:0},
+    range150_200:{count:0,sqft:0},
+    range200_250:{count:0,sqft:0},
+    range250_300:{count:0,sqft:0},
+    above300:{count:0,sqft:0}
+  };
+});
+
+filtered.forEach(r=>{
+
     const team=normalizeTeamName(r[teamKey]);
     const nego=(r[negoKey]||"").toLowerCase();
     let sqft=0;
@@ -419,16 +455,7 @@ function updateDashboard(year,month,teamKey,negoKey,sqftKeys,dateKey){
       sqft+=v;
     });
 
-    if(!teams[team]){
-      teams[team]={totalCount:0,totalSqft:0,
-        range0_100:{count:0,sqft:0},
-        range100_150:{count:0,sqft:0},
-        range150_200:{count:0,sqft:0},
-        range200_250:{count:0,sqft:0},
-        range250_300:{count:0,sqft:0},
-        above300:{count:0,sqft:0}
-      };
-    }
+    
 
     const t=teams[team];
     t.totalCount++; t.totalSqft+=sqft;
@@ -438,10 +465,17 @@ function updateDashboard(year,month,teamKey,negoKey,sqftKeys,dateKey){
     else if(nego.includes("150-200")) t.range150_200.count++, t.range150_200.sqft+=sqft;
     else if(nego.includes("200-250")) t.range200_250.count++, t.range200_250.sqft+=sqft;
     else if(nego.includes("250-300")) t.range250_300.count++, t.range250_300.sqft+=sqft;
-    else if(nego.includes("above 300")) t.above300.count++, t.above300.sqft+=sqft;
+    else if(nego.includes("above") && nego.includes("300")) t.above300.count++, t.above300.sqft+=sqft;
   });
 
-  const sorted=Object.entries(teams).sort((a,b)=>b[1].totalCount-a[1].totalCount);
+  const sorted = Object.entries(teams).sort((a, b) => {
+  if (b[1].totalSqft === 0 && a[1].totalSqft === 0)
+    return a[0].localeCompare(b[0]);
+  if (b[1].totalSqft === 0) return -1;
+  if (a[1].totalSqft === 0) return 1;
+  return b[1].totalSqft - a[1].totalSqft;
+});
+
   const tbody=document.querySelector("#dataTable tbody");
   const tfoot=document.querySelector("#dataTable tfoot");
   tbody.innerHTML=""; tfoot.innerHTML="";
@@ -454,7 +488,9 @@ function updateDashboard(year,month,teamKey,negoKey,sqftKeys,dateKey){
     range250_300:{count:0,sqft:0},
     above300:{count:0,sqft:0}
   };
-  const pct=(p,t)=>t?Math.round((p/t)*100)+"%":"0%";
+  const pct = (rangeSqft, totalSqft) =>
+  totalSqft ? Math.round((rangeSqft / totalSqft) * 100) + "%" : "0%";
+
 
   sorted.forEach(([team,t])=>{
     Object.keys(g).forEach(k=>{
@@ -468,12 +504,12 @@ function updateDashboard(year,month,teamKey,negoKey,sqftKeys,dateKey){
       <tr>
         <td>${team}</td>
         <td>${t.totalCount}</td><td>${Math.round(t.totalSqft)}</td>
-        <td>${t.range0_100.count}</td><td>${Math.round(t.range0_100.sqft)}</td><td>${pct(t.range0_100.count,t.totalCount)}</td>
-        <td>${t.range100_150.count}</td><td>${Math.round(t.range100_150.sqft)}</td><td>${pct(t.range100_150.count,t.totalCount)}</td>
-        <td>${t.range150_200.count}</td><td>${Math.round(t.range150_200.sqft)}</td><td>${pct(t.range150_200.count,t.totalCount)}</td>
-        <td>${t.range200_250.count}</td><td>${Math.round(t.range200_250.sqft)}</td><td>${pct(t.range200_250.count,t.totalCount)}</td>
-        <td>${t.range250_300.count}</td><td>${Math.round(t.range250_300.sqft)}</td><td>${pct(t.range250_300.count,t.totalCount)}</td>
-        <td>${t.above300.count}</td><td>${Math.round(t.above300.sqft)}</td><td>${pct(t.above300.count,t.totalCount)}</td>
+        <td>${t.range0_100.count}</td><td>${Math.round(t.range0_100.sqft)}</td><td>${pct(t.range0_100.sqft,t.totalSqft)}</td>
+        <td>${t.range100_150.count}</td><td>${Math.round(t.range100_150.sqft)}</td><td>${pct(t.range100_150.sqft,t.totalSqft)}</td>
+        <td>${t.range150_200.count}</td><td>${Math.round(t.range150_200.sqft)}</td><td>${pct(t.range150_200.sqft,t.totalSqft)}</td>
+        <td>${t.range200_250.count}</td><td>${Math.round(t.range200_250.sqft)}</td><td>${pct(t.range200_250.sqft,t.totalSqft)}</td>
+        <td>${t.range250_300.count}</td><td>${Math.round(t.range250_300.sqft)}</td><td>${pct(t.range250_300.sqft,t.totalSqft)}</td>
+        <td>${t.above300.count}</td><td>${Math.round(t.above300.sqft)}</td><td>${pct(t.above300.sqft,t.totalSqft)}</td>
       </tr>
     `);
   });
@@ -482,12 +518,12 @@ function updateDashboard(year,month,teamKey,negoKey,sqftKeys,dateKey){
     <tr>
       <td>Grand Total</td>
       <td>${g.totalCount}</td><td>${Math.round(g.totalSqft)}</td>
-      <td>${g.range0_100.count}</td><td>${Math.round(g.range0_100.sqft)}</td><td>${pct(g.range0_100.count,g.totalCount)}</td>
-      <td>${g.range100_150.count}</td><td>${Math.round(g.range100_150.sqft)}</td><td>${pct(g.range100_150.count,g.totalCount)}</td>
-      <td>${g.range150_200.count}</td><td>${Math.round(g.range150_200.sqft)}</td><td>${pct(g.range150_200.count,g.totalCount)}</td>
-      <td>${g.range200_250.count}</td><td>${Math.round(g.range200_250.sqft)}</td><td>${pct(g.range200_250.count,g.totalCount)}</td>
-      <td>${g.range250_300.count}</td><td>${Math.round(g.range250_300.sqft)}</td><td>${pct(g.range250_300.count,g.totalCount)}</td>
-      <td>${g.above300.count}</td><td>${Math.round(g.above300.sqft)}</td><td>${pct(g.above300.count,g.totalCount)}</td>
+      <td>${g.range0_100.count}</td><td>${Math.round(g.range0_100.sqft)}</td><td>${pct(g.range0_100.sqft,g.totalSqft)}</td>
+      <td>${g.range100_150.count}</td><td>${Math.round(g.range100_150.sqft)}</td><td>${pct(g.range100_150.sqft,g.totalSqft)}</td>
+      <td>${g.range150_200.count}</td><td>${Math.round(g.range150_200.sqft)}</td><td>${pct(g.range150_200.sqft,g.totalSqft)}</td>
+      <td>${g.range200_250.count}</td><td>${Math.round(g.range200_250.sqft)}</td><td>${pct(g.range200_250.sqft,g.totalSqft)}</td>
+      <td>${g.range250_300.count}</td><td>${Math.round(g.range250_300.sqft)}</td><td>${pct(g.range250_300.sqft,g.totalSqft)}</td>
+      <td>${g.above300.count}</td><td>${Math.round(g.above300.sqft)}</td><td>${pct(g.above300.sqft,g.totalSqft)}</td>
     </tr>
   `;
 	// ✅ Update KPI cards
@@ -521,55 +557,58 @@ function renderChart(dataArr){
   });
 }
 </script>
+<!-- === PDF DOWNLOAD (Same logic as index.html) === -->
 <script>
 document.getElementById("downloadBtn").addEventListener("click", async () => {
   const { jsPDF } = window.jspdf;
-
   const btn = document.getElementById("downloadBtn");
   const tooltips = document.querySelectorAll(".boss-tooltip");
 
-  // Hide button + tooltips during screenshot
+  // Hide unnecessary UI before capture
   btn.style.visibility = "hidden";
-  tooltips.forEach(t => t.style.display = "none");
+  tooltips.forEach(t => (t.style.display = "none"));
+  window.scrollTo(0, 0);
 
-  // Capture the whole visible dashboard
-  const dashboard = document.body;
+  // Capture the entire dashboard (just like index.html)
+  const captureTarget = document.body;
 
-  await html2canvas(dashboard, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: "#01414d"
-  }).then(canvas => {
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+  await html2canvas(captureTarget, {
+    scale: 2.5,                 // High quality
+    useCORS: true,              // Allow cross-origin images
+    scrollX: 0,
+    scrollY: 0,
+    windowWidth: document.documentElement.scrollWidth,
+    windowHeight: document.documentElement.scrollHeight,
+    backgroundColor: "#01414d"  // Match dashboard background
+  })
+    .then(canvas => {
+      const imgData = canvas.toDataURL("image/jpeg", 1.0);
 
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      // Dynamically size PDF to match dashboard
+      const pdfWidth = canvas.width * 0.264583; // px → mm
+      const pdfHeight = canvas.height * 0.264583;
 
-    let y = 0;
-    pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+      const pdf = new jsPDF({
+        orientation: pdfWidth > pdfHeight ? "l" : "p",
+        unit: "mm",
+        format: [pdfWidth, pdfHeight]
+      });
 
-    // Add extra pages if content is long
-    if (imgHeight > pageHeight) {
-      let heightLeft = imgHeight - pageHeight;
-      while (heightLeft > 0) {
-        y = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-    }
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
 
-    pdf.save("WRM_Dashboard.pdf");
-  }).catch(err => {
-    alert("❌ Error generating PDF: " + err);
-  }).finally(() => {
-    // Restore visibility
-    btn.style.visibility = "visible";
-    tooltips.forEach(t => t.style.display = "");
-  });
+      // Auto file name
+      const now = new Date();
+      const fileName = `WRM_Negotiable_Range_Dashboard_${String(now.getDate()).padStart(2,"0")}_${String(now.getMonth()+1).padStart(2,"0")}_${now.getFullYear()}.pdf`;
+      pdf.save(fileName);
+    })
+    .catch(err => {
+      console.error("PDF Generation Error:", err);
+      alert("⚠️ PDF generation failed. Try again.");
+    })
+    .finally(() => {
+      btn.style.visibility = "visible";
+      tooltips.forEach(t => (t.style.display = ""));
+    });
 });
 </script>
 </body>
